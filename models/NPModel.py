@@ -1,26 +1,35 @@
-import numpy as np
+#import numpy as np
+import cupy as np # using GPU acceleration
 
 class NPNeuralNetwork:
-    def __init__(self, layers, initial_lr=0.001, use_hebbian=True):
+    def __init__(self, layers, initial_lr=0.001, en_hebbian=True, en_adaptive_lr=True, en_plasticity=True):
         self.filename = "artifacts/model_np_"
         self.layers = layers
         self.no_of_layers = len(layers)
+
+        # Control parameters
+        self.en_plasticity = en_plasticity
+        self.en_adaptive_lr = en_adaptive_lr
+        self.en_hebbian = en_hebbian
+
+        # Additional hyperparameters for adaptive learning rate:
+        self.improvement_threshold = 0.001  # relative improvement required (0.1% improvement)
+        self.patience = 5                   # require improvement sustained for a few epochs before acting
+        self.patience_counter = 0
         self.lr = initial_lr
         self.lr_min = 1e-6              # minimum learning rate
         self.lr_max = 0.1               # maximum allowed learning rate
         self.lr_decay_factor = 0.98     # a gentler decay when loss does not improve
         self.lr_growth_factor = 1.05    # a stronger increase when performance improves
 
-        # Additional hyperparameters for adaptive learning rate:
-        self.improvement_threshold = 0.001  # relative improvement required (0.1% improvement)
-        self.patience = 5                   # require improvement sustained for a few epochs before acting
-        self.patience_counter = 0
-
         # Hyperparameters for neuroplasticity:
         self.hebbian_rate = 1e-4          # scaling factor for Hebbian update
-        self.use_hebbian = use_hebbian          # disable Hebbian term for diagnostics; reenable later if desired
-        self.prune_threshold = 1e-4       # threshold for cumulative update below which connections are pruned  
-        self.requalify_threshold = 1e-2   # if weights are near zero, they get reinitialized when loss degrades
+        if en_plasticity:
+            self.prune_threshold = 1e-4       # threshold for cumulative update below which connections are pruned  
+            self.requalify_threshold = 1e-2   # if weights are near zero, they get reinitialized when loss degrades
+        else:
+            self.prune_threshold = -1
+            self.requalify_threshold = -1
 
         # Structural plasticity update interval
         self.plasticity_interval = 5
@@ -105,7 +114,7 @@ class NPNeuralNetwork:
             nabla_b[-i] = np.sum(delta, axis=0, keepdims=True)
 
         # Optionally add the Hebbian component:
-        if self.use_hebbian:
+        if self.en_hebbian:
             for i in range(len(nabla_w)):
                 hebbian_term = self.hebbian_rate * np.dot(activations[i].T, activations[i+1])
                 nabla_w[i] += hebbian_term
@@ -146,7 +155,7 @@ class NPNeuralNetwork:
                 self.cum_weight_updates[i] = np.zeros_like(self.weights[i])
 
         # Adaptive learning rate based on relative change in the smoothed loss:
-        if self.prev_loss is not None:
+        if self.en_adaptive_lr and self.prev_loss is not None:
             relative_improvement = (self.prev_loss - self.smoothed_loss) / self.prev_loss
 
             if relative_improvement > self.improvement_threshold:

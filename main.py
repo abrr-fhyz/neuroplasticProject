@@ -1,4 +1,3 @@
-import numpy as np
 from tensorflow.keras.utils import to_categorical
 from models.NNModel import NeuralNetwork
 from models.NPModel import NPNeuralNetwork
