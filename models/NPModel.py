@@ -1,5 +1,4 @@
-#import numpy as np
-import cupy as np # using GPU acceleration
+import numpy as np
 
 class NPNeuralNetwork:
     def __init__(self, layers, initial_lr=0.001, en_hebbian=True, en_adaptive_lr=True, en_plasticity=True):

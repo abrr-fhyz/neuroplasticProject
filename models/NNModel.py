@@ -1,5 +1,4 @@
-#import numpy as np
-import cupy as np # using GPU acceleration
+import numpy as np
 
 
 class NeuralNetwork:
