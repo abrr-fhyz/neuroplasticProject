@@ -36,7 +36,7 @@ architectures = [
 def handle_ablation_testing(i, j, X_train, y_train, X_test, y_test, y_test_orig):
     e = epochs[i]
     architecture = architectures[i]
-    idn = i*10 + j
+    idn = i*100 + j
     print(f"Training NPNN with only Connection + Prunning Neurogenesis - IDN: {idn}...")
     np_model_1 = NPNeuralNetwork(architecture, en_hebbian=False, en_adaptive_lr=False)
     np_model_1.train(X_train, y_train, epochs=e)

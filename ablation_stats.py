@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from models.NNModel import NeuralNetwork
 from models.NPModel import NPNeuralNetwork
 
-def show_comparison_stats(acc_1, acc_2, lss_1, lss_2, acc_3, lss_3, acc_4, lss_4, acc_5, lss_5, label_1='Pruning/genesis', label_2='Adaptive LR', label_3='Hebbian', label_4='Full NPNN', label_5='Standard NN'):
+def show_comparison_stats(acc_1, acc_2, lss_1, lss_2, acc_3, lss_3, acc_4, lss_4, acc_5, lss_5, idn, label_1='Pruning/genesis', label_2='Adaptive LR', label_3='Hebbian', label_4='Full NPNN', label_5='Standard NN'):
     epochs = range(1, len(acc_1) + 1)
     acc_1_percent = [a * 100 for a in acc_1]
     acc_2_percent = [a * 100 for a in acc_2]
@@ -84,33 +84,38 @@ def show_comparison_stats(acc_1, acc_2, lss_1, lss_2, acc_3, lss_3, acc_4, lss_4
     ax2.grid(True, linestyle='--', alpha=0.6)
 
     plt.tight_layout()
-    plt.savefig(f'Images/comparison_stats_ablation.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'Images/comparison_stats_ablation_{idn}.png', dpi=150, bbox_inches='tight')
     plt.show()
     plt.close()
 
-def intermediate_func(model_1, model_2, model_3, model_4, model_5):
+def intermediate_func(model_1, model_2, model_3, model_4, model_5, idn):
     acc_1, lss_1 = model_1.get_stats()
     acc_2, lss_2 = model_2.get_stats()
     acc_3, lss_3 = model_3.get_stats()
     acc_4, lss_4 = model_4.get_stats()
     acc_5, lss_5 = model_5.get_stats()
-    show_comparison_stats(acc_1, acc_2, lss_1, lss_2, acc_3, lss_3, acc_4, lss_4, acc_5, lss_5)
+    show_comparison_stats(acc_1, acc_2, lss_1, lss_2, acc_3, lss_3, acc_4, lss_4, acc_5, lss_5, idn)
+
+arch = [
+    [784, 256, 128, 10],
+    [3072, 512, 256, 128, 10]
+]
 
 def main():
-    arch = [784, 256, 128, 10]
-    model_1 = NPNeuralNetwork(arch)
-    model_2 = NPNeuralNetwork(arch)
-    model_3 = NPNeuralNetwork(arch)
-    model_4 = NPNeuralNetwork(arch)
-    model_5 = NeuralNetwork(arch)
+    for i in range(0,2):
+        model_1 = NPNeuralNetwork(arch[i])
+        model_2 = NPNeuralNetwork(arch[i])
+        model_3 = NPNeuralNetwork(arch[i])
+        model_4 = NPNeuralNetwork(arch[i])
+        model_5 = NeuralNetwork(arch[i])
+        for idn in range(0, 10):
+            model_1.load_model(1000 + i*100 + idn)
+            model_2.load_model(2000 + i*100 + idn)
+            model_3.load_model(3000 + i*100 + idn)
+            model_4.load_model(idn)
+            model_5.load_model(idn)
 
-    model_1.load_model(1000)
-    model_2.load_model(2000)
-    model_3.load_model(3000)
-    model_4.load_model(0)
-    model_5.load_model(0)
-
-    intermediate_func(model_1, model_2, model_3, model_4, model_5)
+        intermediate_func(model_1, model_2, model_3, model_4, model_5, idn)
 
 if __name__ == "__main__":
     main()

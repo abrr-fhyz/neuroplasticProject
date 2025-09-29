@@ -6,26 +6,28 @@ class NPNeuralNetwork:
         self.layers = layers
         self.no_of_layers = len(layers)
 
-        # Control parameters
+        # Control parameters, Default is True
         self.en_plasticity = en_plasticity
         self.en_adaptive_lr = en_adaptive_lr
         self.en_hebbian = en_hebbian
 
         # Additional hyperparameters for adaptive learning rate:
-        self.improvement_threshold = 0.001  # relative improvement required (0.1% improvement)
-        self.patience = 5                   # require improvement sustained for a few epochs before acting
+        self.improvement_threshold = 0.001 # relative improvement required (0.1% improvement)
+        self.patience = 5 # require improvement sustained for a few epochs before acting
         self.patience_counter = 0
         self.lr = initial_lr
-        self.lr_min = 1e-6              # minimum learning rate
-        self.lr_max = 0.1               # maximum allowed learning rate
-        self.lr_decay_factor = 0.98     # a gentler decay when loss does not improve
-        self.lr_growth_factor = 1.05    # a stronger increase when performance improves
+        self.lr_min = 1e-6 # minimum learning rate
+        self.lr_max = 0.1  # maximum allowed learning rate
+        self.lr_decay_factor = 0.98 # a gentler decay when loss does not improve
+        self.lr_growth_factor = 1.05 # a stronger increase when performance improves
 
         # Hyperparameters for neuroplasticity:
-        self.hebbian_rate = 1e-4          # scaling factor for Hebbian update
+        self.hebbian_rate = 1e-3 # scaling factor for Hebbian update
+        self.bcm_const = 1000 # bcm time constant threshold
+        self.plasticity_factor = 2.0
         if en_plasticity:
-            self.prune_threshold = 1e-4       # threshold for cumulative update below which connections are pruned  
-            self.requalify_threshold = 1e-2   # if weights are near zero, they get reinitialized when loss degrades
+            self.prune_threshold = 1e-4 # threshold for cumulative update below which connections are pruned  
+            self.requalify_threshold = 1e-2 # if weights are near zero, they get reinitialized when loss degrades
         else:
             self.prune_threshold = -1
             self.requalify_threshold = -1
@@ -37,8 +39,9 @@ class NPNeuralNetwork:
         # Network initialization
         self.weights = []
         self.biases = []
-        self.masks = []                # 1 for active connection, 0 for pruned connection
-        self.cum_weight_updates = []   # track cumulative weight updates for pruning
+        self.masks = [] # 1 for active connection, 0 for pruned connection
+        self.cum_weight_updates = [] # track cumulative weight updates for pruning
+        self.bcm_thresholds = [] # BCM thresholds (one per neuron0
 
         for i in range(self.no_of_layers-1):
             w = np.random.randn(layers[i], layers[i+1]) * 0.1
@@ -47,14 +50,13 @@ class NPNeuralNetwork:
             self.biases.append(b)
             self.masks.append(np.ones_like(w))
             self.cum_weight_updates.append(np.zeros_like(w))
+            self.bcm_thresholds.append(np.ones((1, layers[i+1])) * 0.1)
 
         self.acc_stat = []
         self.loss_stat = []
         self.prev_loss = None
         self.smoothed_loss = None
-
-        # For gradient clipping:
-        self.clip_value = 1.0
+        self.clip_value = 1.0 # For gradient clipping
 
     @staticmethod
     def sigmoid(x):
@@ -112,18 +114,32 @@ class NPNeuralNetwork:
             nabla_w[-i] = np.dot(activations[-i-1].T, delta)
             nabla_b[-i] = np.sum(delta, axis=0, keepdims=True)
 
-        # Optionally add the Hebbian component:
+        # Hebbian component:
         if self.en_hebbian:
+            current_hebbian = self.hebbian_rate
+            plasticity_event = (self.epoch_count % self.plasticity_interval == 0) 
+            if plasticity_event:
+                current_hebbian *= self.plasticity_factor
+
             for i in range(len(nabla_w)):
+                post_squared_avg = np.mean(activations[i+1]**2, axis=0, keepdims=True)
+                self.bcm_thresholds[i] = (
+                    (self.bcm_const - 1) / self.bcm_const * self.bcm_thresholds[i] + 
+                    1 / self.bcm_const * post_squared_avg
+                )  
+                # BCM modification:
+                bcm_modulation = activations[i+1] * (activations[i+1] - self.bcm_thresholds[i])
+                bcm_update = current_hebbian * np.dot(activations[i].T, bcm_modulation)
+                nabla_w[i] += bcm_update
                 hebbian_term = self.hebbian_rate * np.dot(activations[i].T, activations[i+1])
                 nabla_w[i] += hebbian_term
 
-        # Gradient clipping to control extremes:
+        # Gradient clipping:
         for i in range(len(nabla_w)):
             nabla_w[i] = np.clip(nabla_w[i], -self.clip_value, self.clip_value)
             nabla_b[i] = np.clip(nabla_b[i], -self.clip_value, self.clip_value)
 
-        # Apply weight and bias updates using the active connection masks:
+        # Weight and bias updates using the active connection masks:
         for i in range(len(self.weights)):
             update = self.lr * nabla_w[i]
             self.weights[i] -= update * self.masks[i]
@@ -211,9 +227,11 @@ class NPNeuralNetwork:
             save_dict[f"bias_{idx}"] = b
         for idx, m in enumerate(self.masks):
             save_dict[f"masks_{idx}"] = m
+        for idx, t in enumerate(self.bcm_thresholds):
+            save_dict[f"bcm_threshold_{idx}"] = t
         modelName = f"{self.filename}{idn}.npz"
         np.savez(modelName, **save_dict)
-        print("NN model saved successfully as model_np.npz")
+        print(f"NP model saved successfully as {modelName}")
 
     def load_model(self, idn):
         modelName = f"{self.filename}{idn}.npz"
@@ -223,6 +241,7 @@ class NPNeuralNetwork:
         self.weights = [data[f"weight_{i}"] for i in range(self.no_of_layers - 1)]
         self.biases = [data[f"bias_{i}"] for i in range(self.no_of_layers - 1)]
         self.masks = [data[f"masks_{i}"] for i in range(self.no_of_layers - 1)]
+        self.bcm_thresholds = [data[f"bcm_threshold_{i}"] for i in range(self.no_of_layers - 1)]
         self.acc_stat = list(data["accuracy"])
         self.loss_stat = list(data["loss"])
 
