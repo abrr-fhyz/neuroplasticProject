@@ -1,10 +1,21 @@
 import numpy as np
 
+
 class NPNeuralNetwork:
-    def __init__(self, layers, initial_lr=0.001, en_hebbian=True, en_adaptive_lr=True, en_plasticity=True):
+    def __init__(self, layers, initial_lr=0.001, en_hebbian=True, en_adaptive_lr=True, en_plasticity=True, gpu = True):
         self.filename = "artifacts/model_np_"
         self.layers = layers
         self.no_of_layers = len(layers)
+
+        if gpu:
+            global np
+            try:
+                import cupy as np
+                GPU_AVAILABLE = True
+                print("GPU available")
+            except ImportError:
+                GPU_AVAILABLE = False
+                print("GPU not available")
 
         # Control parameters, Default is True
         self.en_plasticity = en_plasticity
@@ -147,6 +158,7 @@ class NPNeuralNetwork:
             self.cum_weight_updates[i] += np.abs(update)
 
     def predict(self, X):
+        X = np.asarray(X)
         activations, _ = self.feed_forward(X)
         return activations[-1]
 
@@ -189,7 +201,11 @@ class NPNeuralNetwork:
         self.prev_loss = self.smoothed_loss
 
     def train(self, X, y, epochs=1000, batch_size=32):
+        # Ensure X and y are the same array type as np (CuPy or NumPy)
+        X = np.asarray(X)
+        y = np.asarray(y)
         n = X.shape[0]
+        
         for epoch in range(epochs):
             self.epoch_count += 1
             indices = np.arange(n)
@@ -208,41 +224,41 @@ class NPNeuralNetwork:
             true = np.argmax(y, axis=1)
             acc = np.mean(predicted == true)
             print(f"Epoch {epoch+1}, Loss: {loss:.5f}, Accuracy: {acc*100:.2f}%, LR: {self.lr:.8f}")
-            self.acc_stat.append(acc)
-            self.loss_stat.append(loss)
+            self.acc_stat.append(float(acc))
+            self.loss_stat.append(float(loss))
             self.plasticity_update(loss)
 
     def get_stats(self):
         return self.acc_stat, self.loss_stat
 
     def save_model(self, idn):
+        import numpy as numpy_lib
         save_dict = {
             "layers": self.layers,
             "accuracy": self.acc_stat,
             "loss": self.loss_stat
         }
         for idx, w in enumerate(self.weights):
-            save_dict[f"weight_{idx}"] = w
+            save_dict[f"weight_{idx}"] = np.asnumpy(w) if GPU_AVAILABLE else w
         for idx, b in enumerate(self.biases):
-            save_dict[f"bias_{idx}"] = b
+            save_dict[f"bias_{idx}"] = np.asnumpy(b) if GPU_AVAILABLE else b
         for idx, m in enumerate(self.masks):
-            save_dict[f"masks_{idx}"] = m
+            save_dict[f"masks_{idx}"] = np.asnumpy(m) if GPU_AVAILABLE else m
         for idx, t in enumerate(self.bcm_thresholds):
-            save_dict[f"bcm_threshold_{idx}"] = t
+            save_dict[f"bcm_threshold_{idx}"] = np.asnumpy(t) if GPU_AVAILABLE else t
         modelName = f"{self.filename}{idn}.npz"
-        np.savez(modelName, **save_dict)
+        numpy_lib.savez(modelName, **save_dict)
         print(f"NP model saved successfully as {modelName}")
 
     def load_model(self, idn):
+        import numpy as numpy_lib
         modelName = f"{self.filename}{idn}.npz"
-        data = np.load(modelName, allow_pickle=True)
+        data = numpy_lib.load(modelName, allow_pickle=True)
         self.layers = list(data["layers"])
         self.no_of_layers = len(self.layers)
-        self.weights = [data[f"weight_{i}"] for i in range(self.no_of_layers - 1)]
-        self.biases = [data[f"bias_{i}"] for i in range(self.no_of_layers - 1)]
-        self.masks = [data[f"masks_{i}"] for i in range(self.no_of_layers - 1)]
-        self.bcm_thresholds = [data[f"bcm_threshold_{i}"] for i in range(self.no_of_layers - 1)]
+        self.weights = [np.asarray(data[f"weight_{i}"]) for i in range(self.no_of_layers - 1)]
+        self.biases = [np.asarray(data[f"bias_{i}"]) for i in range(self.no_of_layers - 1)]
+        self.masks = [np.asarray(data[f"masks_{i}"]) for i in range(self.no_of_layers - 1)]
+        self.bcm_thresholds = [np.asarray(data[f"bcm_threshold_{i}"]) for i in range(self.no_of_layers - 1)]
         self.acc_stat = list(data["accuracy"])
         self.loss_stat = list(data["loss"])
-
-

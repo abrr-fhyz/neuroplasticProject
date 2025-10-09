@@ -3,11 +3,11 @@ from models.NPModel import NPNeuralNetwork
 
 #datasets
 from tensorflow.keras.datasets import (
-    mnist, cifar10
+    fashion_mnist, cifar10
 ) 
 
 def load_data_MNIST():
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+    (X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
     X_test = X_test.reshape(-1, 784) / 255.0
     X_train = X_train.reshape(-1, 784) / 255.0
     y_train = to_categorical(y_train, 10)
@@ -56,7 +56,7 @@ def main():
     for i in range(0, 2):
         if i == 0:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_MNIST()
-            print(f"\n\n\n TRAINING ON MNIST FOR {no_of_test} TESTS \n\n\n")
+            print(f"\n\n\n TRAINING ON Fashion MNIST FOR {no_of_test} TESTS \n\n\n")
         else:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_CIFAR10()
             print(f"\n\n\n TRAINING ON CIFAR FOR {no_of_test} TESTS \n\n\n")

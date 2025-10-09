@@ -7,7 +7,7 @@ import os
 
 #datasets
 from tensorflow.keras.datasets import (
-    mnist, fashion_mnist, cifar10, cifar100
+    mnist, fashion_mnist, cifar10
 ) 
 
 def ensure_directories():
@@ -48,18 +48,9 @@ def load_data_CIFAR10():
     
     return X_train, y_train, X_test, y_test, y_test_orig
 
-def load_data_CIFAR100():
-    (X_train, y_train), (X_test, y_test) = cifar100.load_data()
-    X_test = X_test.reshape(-1, 3072) / 255.0
-    X_train = X_train.reshape(-1, 3072) / 255.0
-    y_train = to_categorical(y_train, 100)
-    y_test_orig = y_test.flatten() if y_test.ndim > 1 else y_test
-    y_test = to_categorical(y_test, 100)
-    
-    return X_train, y_train, X_test, y_test, y_test_orig
-
-no_of_test = 10
-epochs = [100, 100, 200, 300]
+initial_test = 1
+final_test = 4
+epochs = [50, 80, 120, 300]
 architectures = [
     [784, 256, 128, 10],
     [784, 256, 128, 10],
@@ -76,11 +67,13 @@ def handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig):
     std_model = NeuralNetwork(architecture)
     std_model.train(X_train, y_train, epochs=e)
     std_model.save_model(idn)
+    #std_model.load_model(idn)
 
     print(f"\nTraining neuroplastic neural network - IDN: {idn}...")
     np_model = NPNeuralNetwork(architecture)
     np_model.train(X_train, y_train, epochs=e)
     np_model.save_model(idn)
+    #np_model.load_model(idn)
 
     process_and_save_results(idn, std_model, np_model, X_test, y_test, y_test_orig)
 
@@ -89,21 +82,22 @@ def handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig):
 def main():
     ensure_directories()
     
-    for i in range(0, 4):
+    for i in range(2, 3):
         if i == 0:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_MNIST()
-            print(f"\n\n\n TRAINING ON MNIST FOR {no_of_test} TESTS \n\n\n")
+            print(f"\n\n\n TRAINING ON MNIST FOR {final_test - initial_test} TESTS \n\n\n")
         elif i == 1:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_fashion()
-            print(f"\n\n\n TRAINING ON FASHION MNIST FOR {no_of_test} TESTS \n\n\n")
+            print(f"\n\n\n TRAINING ON FASHION MNIST FOR {final_test - initial_test} TESTS \n\n\n")
         elif i == 2:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_CIFAR10()
-            print(f"\n\n\n TRAINING ON CIFAR FOR {no_of_test} TESTS \n\n\n")
+            print(f"\n\n\n TRAINING ON CIFAR FOR {final_test - initial_test} TESTS \n\n\n")
         else:
-            X_train, y_train, X_test, y_test, y_test_orig = load_data_CIFAR100()
-            print(f"\n\n\n TRAINING ON CIFAR(advanced) FOR {no_of_test} TESTS \n\n\n")
+            #CIFAR100 removed for now
+            #X_train, y_train, X_test, y_test, y_test_orig = load_data_CIFAR100()
+            print(f"\n\n\n TRAINING ON CIFAR(advanced) FOR {final_test - initial_test} TESTS \n\n\n")
 
-        for j in range(no_of_test):
+        for j in range(initial_test, final_test):
             handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig)
 
         print("\n\n\n TRAIN AND TEST LOOP FINISHED \n\n\n")
