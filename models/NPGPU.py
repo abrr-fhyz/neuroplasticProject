@@ -1,5 +1,5 @@
 import numpy as np
-
+gpu_active = False
 
 class NPNeuralNetwork:
     def __init__(self, layers, initial_lr=0.001, en_hebbian=True, en_adaptive_lr=True, en_plasticity=True, gpu = True):
@@ -9,12 +9,12 @@ class NPNeuralNetwork:
 
         if gpu:
             global np
+            global gpu_active
             try:
                 import cupy as np
-                GPU_AVAILABLE = True
+                gpu_active = True
                 print("GPU available")
             except ImportError:
-                GPU_AVAILABLE = False
                 print("GPU not available")
 
         # Control parameters, Default is True
@@ -239,13 +239,13 @@ class NPNeuralNetwork:
             "loss": self.loss_stat
         }
         for idx, w in enumerate(self.weights):
-            save_dict[f"weight_{idx}"] = np.asnumpy(w) if GPU_AVAILABLE else w
+            save_dict[f"weight_{idx}"] = np.asnumpy(w) if gpu_active else w
         for idx, b in enumerate(self.biases):
-            save_dict[f"bias_{idx}"] = np.asnumpy(b) if GPU_AVAILABLE else b
+            save_dict[f"bias_{idx}"] = np.asnumpy(b) if gpu_active else b
         for idx, m in enumerate(self.masks):
-            save_dict[f"masks_{idx}"] = np.asnumpy(m) if GPU_AVAILABLE else m
+            save_dict[f"masks_{idx}"] = np.asnumpy(m) if gpu_active else m
         for idx, t in enumerate(self.bcm_thresholds):
-            save_dict[f"bcm_threshold_{idx}"] = np.asnumpy(t) if GPU_AVAILABLE else t
+            save_dict[f"bcm_threshold_{idx}"] = np.asnumpy(t) if gpu_active else t
         modelName = f"{self.filename}{idn}.npz"
         numpy_lib.savez(modelName, **save_dict)
         print(f"NP model saved successfully as {modelName}")

@@ -1,4 +1,5 @@
 import numpy as np
+gpu_active = False
 
 class NeuralNetwork:
     def __init__(self, layers, gpu = True):
@@ -6,12 +7,12 @@ class NeuralNetwork:
 
         if gpu:
             global np
+            global gpu_active
             try:
                 import cupy as np
-                GPU_AVAILABLE = True
+                gpu_active = True
                 print("GPU available")
             except ImportError:
-                GPU_AVAILABLE = False
                 print("GPU not available")
 
         self.layers = layers
@@ -123,9 +124,9 @@ class NeuralNetwork:
             "loss": self.loss_stat
         }
         for idx, w in enumerate(self.weights):
-            save_dict[f"weight_{idx}"] = np.asnumpy(w) if GPU_AVAILABLE else w
+            save_dict[f"weight_{idx}"] = np.asnumpy(w) if gpu_active else w
         for idx, b in enumerate(self.biases):
-            save_dict[f"bias_{idx}"] = np.asnumpy(b) if GPU_AVAILABLE else b
+            save_dict[f"bias_{idx}"] = np.asnumpy(b) if gpu_active else b
         modelName = f"{self.filename}{idn}.npz"
         numpy_lib.savez(modelName, **save_dict)
         print("NN model saved successfully as " + modelName)
