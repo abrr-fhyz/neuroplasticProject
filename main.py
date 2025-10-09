@@ -1,6 +1,6 @@
 from tensorflow.keras.utils import to_categorical
-from models.NNModel import NeuralNetwork
-from models.NPModel import NPNeuralNetwork
+from models.NNGPU import NeuralNetwork
+from models.NPGPU import NPNeuralNetwork
 from Stats import ( process_and_save_results, plot_final_metrics)
 import pandas as pd
 import os
@@ -48,8 +48,8 @@ def load_data_CIFAR10():
     
     return X_train, y_train, X_test, y_test, y_test_orig
 
-initial_test = 1
-final_test = 4
+initial_test = 0
+final_test = 10
 epochs = [50, 80, 120, 300]
 architectures = [
     [784, 256, 128, 10],
@@ -82,7 +82,7 @@ def handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig):
 def main():
     ensure_directories()
     
-    for i in range(2, 3):
+    for i in range(0, 3):
         if i == 0:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_MNIST()
             print(f"\n\n\n TRAINING ON MNIST FOR {final_test - initial_test} TESTS \n\n\n")
