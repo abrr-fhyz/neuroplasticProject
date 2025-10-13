@@ -52,7 +52,7 @@ class NPNeuralNetwork:
         self.biases = []
         self.masks = [] # 1 for active connection, 0 for pruned connection
         self.cum_weight_updates = [] # track cumulative weight updates for pruning
-        self.bcm_thresholds = [] # BCM thresholds (one per neuron0
+        self.bcm_thresholds = [] # BCM thresholds (one per neuron)
 
         for i in range(self.no_of_layers-1):
             w = np.random.randn(layers[i], layers[i+1]) * 0.1

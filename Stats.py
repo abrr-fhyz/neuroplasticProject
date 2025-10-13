@@ -1,19 +1,28 @@
-import numpy as np
+import cupy as np
+import numpy as numpy_lib
 import matplotlib.pyplot as plt
 import time
-import seaborn as sns
 import json
 from sklearn.metrics import (
     confusion_matrix, precision_score, recall_score, f1_score, 
     r2_score, roc_curve, auc, precision_recall_curve, average_precision_score,
     classification_report
 )
-from sklearn.decomposition import PCA
-from models.NNModel import NeuralNetwork
-from models.NPModel import NPNeuralNetwork
 import pandas as pd
 
+def to_numpy(arr):
+    """Convert CuPy array to NumPy array if needed."""
+    if hasattr(arr, 'get'):
+        return arr.get()
+    return arr
+
 def show_comparison_stats(acc_1, acc_2, lss_1, lss_2, idn, label_1='Standard NN', label_2='NP NN'):
+    # Convert CuPy lists to numpy for plotting
+    acc_1 = [to_numpy(a) if hasattr(a, 'get') else a for a in acc_1]
+    acc_2 = [to_numpy(a) if hasattr(a, 'get') else a for a in acc_2]
+    lss_1 = [to_numpy(l) if hasattr(l, 'get') else l for l in lss_1]
+    lss_2 = [to_numpy(l) if hasattr(l, 'get') else l for l in lss_2]
+    
     epochs_1 = range(1, len(acc_1) + 1)
     epochs_2 = range(1, len(acc_2) + 1)
     acc_1_percent = [a * 100 for a in acc_1]
@@ -64,14 +73,20 @@ def evaluate_model(model, X_test, y_test, y_test_orig, model_name):
     preds = model.predict(X_test)
     inference_time = (time.time() - start_time) / len(X_test)
     
-    predicted_classes = np.argmax(preds, axis=1)
-    true_classes = np.argmax(y_test, axis=1)
+    # Convert CuPy arrays to NumPy for sklearn/numpy operations
+    preds_np = to_numpy(preds)
+    y_test_np = to_numpy(y_test)
+    y_test_orig_np = to_numpy(y_test_orig)
     
-    accuracy = np.mean(predicted_classes == true_classes)
+    # Use NumPy for argmax to avoid dtype parameter issue with CuPy
+    predicted_classes = numpy_lib.argmax(preds_np, axis=1)
+    true_classes = numpy_lib.argmax(y_test_np, axis=1)
+    
+    accuracy = numpy_lib.mean(predicted_classes == true_classes)
     precision = precision_score(true_classes, predicted_classes, average='macro')
     recall = recall_score(true_classes, predicted_classes, average='macro')
     f1 = f1_score(true_classes, predicted_classes, average='macro')
-    r2 = r2_score(y_test, preds)
+    r2 = r2_score(y_test_np, preds_np)
     cm = confusion_matrix(true_classes, predicted_classes)
     
     n_classes = 10
@@ -80,11 +95,11 @@ def evaluate_model(model, X_test, y_test, y_test_orig, model_name):
     roc_auc = dict()
     for i in range(n_classes):
         fpr[i], tpr[i], _ = roc_curve((true_classes == i).astype(int), 
-                                      preds[:, i])
+                                      preds_np[:, i])
         roc_auc[i] = auc(fpr[i], tpr[i])
     
-    fpr["micro"], tpr["micro"], _ = roc_curve(np.eye(n_classes)[true_classes].ravel(), 
-                                            preds.ravel())
+    fpr["micro"], tpr["micro"], _ = roc_curve(numpy_lib.eye(n_classes)[true_classes].ravel(), 
+                                            preds_np.ravel())
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
     
     precision_curve = dict()
@@ -92,10 +107,10 @@ def evaluate_model(model, X_test, y_test, y_test_orig, model_name):
     average_precision = dict()
     for i in range(n_classes):
         precision_curve[i], recall_curve[i], _ = precision_recall_curve(
-            (true_classes == i).astype(int), preds[:, i]
+            (true_classes == i).astype(int), preds_np[:, i]
         )
         average_precision[i] = average_precision_score(
-            (true_classes == i).astype(int), preds[:, i]
+            (true_classes == i).astype(int), preds_np[:, i]
         )
     
     class_report = classification_report(true_classes, predicted_classes, output_dict=True)
@@ -112,77 +127,20 @@ def evaluate_model(model, X_test, y_test, y_test_orig, model_name):
     
     return {
         'name': model_name,
-        'accuracy': accuracy,
-        'precision': precision,
-        'recall': recall,
-        'f1': f1,
-        'r2': r2,
-        'inference_time': inference_time * 1000,
+        'accuracy': float(accuracy),
+        'precision': float(precision),
+        'recall': float(recall),
+        'f1': float(f1),
+        'r2': float(r2),
+        'inference_time': float(inference_time * 1000),
         'confusion_matrix': cm,
         'predictions': predicted_classes,
-        'probabilities': preds,
+        'probabilities': preds_np,
         'roc_auc': roc_auc,
         'fpr': fpr,
         'tpr': tpr,
         'class_metrics': class_metrics
     }
-
-def plot_confusion_matrix(results, idn, figsize=(20, 8)):
-    fig, axes = plt.subplots(1, 2, figsize=figsize)
-    
-    for i, result in enumerate(results):
-        cm = result['confusion_matrix']
-        ax = axes[i]
-        
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
-        ax.set_title(f"Confusion Matrix - {result['name']}")
-        ax.set_xlabel('Predicted Label')
-        ax.set_ylabel('True Label')
-    
-    plt.tight_layout()
-    plt.savefig(f'Images/confusion_matrix_{idn}.png', dpi=150, bbox_inches='tight')
-    plt.close()
-
-def plot_roc_curves(results, idn, figsize=(18, 8)):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
-    
-    for result in results:
-        ax1.plot(result['fpr']['micro'], result['tpr']['micro'],
-                label=f"{result['name']} (AUC = {result['roc_auc']['micro']:.3f})")
-    
-    ax1.plot([0, 1], [0, 1], 'k--')
-    ax1.set_xlim([0.0, 1.0])
-    ax1.set_ylim([0.0, 1.05])
-    ax1.set_xlabel('False Positive Rate')
-    ax1.set_ylabel('True Positive Rate')
-    ax1.set_title('Micro-Average ROC Curves')
-    ax1.legend(loc="lower right")
-    ax1.grid(True, linestyle='--', alpha=0.6)
-    
-    selected_classes = [0, 1, 2] 
-    line_styles = ['-', '--', '-.']
-    
-    for result in results:
-        for i, cls in enumerate(selected_classes):
-            ax2.plot(
-                result['fpr'][cls], 
-                result['tpr'][cls],
-                linestyle=line_styles[i],
-                label=f"{result['name']}, Class {cls} (AUC = {result['roc_auc'][cls]:.3f})"
-            )
-    
-    ax2.plot([0, 1], [0, 1], 'k--')
-    ax2.set_xlim([0.0, 1.0])
-    ax2.set_ylim([0.0, 1.05])
-    ax2.set_xlabel('False Positive Rate')
-    ax2.set_ylabel('True Positive Rate')
-    ax2.set_title('Class-Specific ROC Curves')
-    ax2.legend(loc="lower right")
-    ax2.grid(True, linestyle='--', alpha=0.6)
-    
-    plt.tight_layout()
-    plt.savefig(f'Images/roc_curves_{idn}.png', dpi=150, bbox_inches='tight')
-    plt.close()
 
 def plot_summary_metrics(results, idn, figsize=(12, 6)):
     metrics = ['accuracy', 'precision', 'recall', 'f1']
@@ -196,7 +154,7 @@ def plot_summary_metrics(results, idn, figsize=(12, 6)):
     values_1 = [results[0][m] for m in metrics[:-1]] + [norm_time_1]
     values_2 = [results[1][m] for m in metrics[:-1]] + [norm_time_2]
     
-    angles = np.linspace(0, 2*np.pi, len(metrics), endpoint=False).tolist()
+    angles = numpy_lib.linspace(0, 2*numpy_lib.pi, len(metrics), endpoint=False).tolist()
     angles += angles[:1] 
     
     values_1 += values_1[:1]
@@ -210,7 +168,7 @@ def plot_summary_metrics(results, idn, figsize=(12, 6)):
     ax.fill(angles, values_1, alpha=0.25)
     ax.fill(angles, values_2, alpha=0.25)
     
-    ax.set_thetagrids(np.degrees(angles[:-1]), metrics[:-1])
+    ax.set_thetagrids(numpy_lib.degrees(angles[:-1]), metrics[:-1])
     ax.set_ylim(0, 1)
     ax.grid(True)
     ax.legend(loc='upper right')
@@ -220,100 +178,7 @@ def plot_summary_metrics(results, idn, figsize=(12, 6)):
     plt.savefig(f'Images/summary_metrics_{idn}.png', dpi=150, bbox_inches='tight')
     plt.close()
 
-def plot_pca_visualization(X_test, y_test_orig, results, idn, figsize=(16, 7)):
-    pca = PCA(n_components=2)
-    X_test_pca = pca.fit_transform(X_test)
-    
-    fig, axes = plt.subplots(1, 2, figsize=figsize)
-    
-    for i, result in enumerate(results):
-        ax = axes[i]
-        
-        correct_indices = np.where(result['predictions'] == y_test_orig)[0]
-        incorrect_indices = np.where(result['predictions'] != y_test_orig)[0]
-        
-        ax.scatter(
-            X_test_pca[correct_indices, 0], 
-            X_test_pca[correct_indices, 1],
-            c='green', 
-            marker='.', 
-            alpha=0.5,
-            label='Correct'
-        )
-        
-        ax.scatter(
-            X_test_pca[incorrect_indices, 0], 
-            X_test_pca[incorrect_indices, 1],
-            c='red', 
-            marker='x',
-            label='Incorrect'
-        )
-        
-        ax.set_title(f"{result['name']} - PCA Visualization")
-        ax.set_xlabel('Principal Component 1')
-        ax.set_ylabel('Principal Component 2')
-        ax.legend()
-        ax.grid(True, linestyle='--', alpha=0.6)
-    
-    plt.tight_layout()
-    plt.savefig(f'Images/pca_visualization_{idn}.png', dpi=150, bbox_inches='tight')
-    plt.close()
-
-def plot_epoch_convergence(acc_1, acc_2, lss_1, lss_2, idn, figsize=(12, 6)):
-    thresholds = [0.90, 0.95, 0.98, 0.99]
-    acc_1_np = np.array(acc_1)
-    acc_2_np = np.array(acc_2)
-    
-    std_epochs = []
-    np_epochs = []
-    
-    for threshold in thresholds:
-        std_epoch = np.argmax(acc_1_np >= threshold) if np.any(acc_1_np >= threshold) else len(acc_1_np)
-        np_epoch = np.argmax(acc_2_np >= threshold) if np.any(acc_2_np >= threshold) else len(acc_2_np)
-        
-        std_epochs.append(std_epoch + 1)
-        np_epochs.append(np_epoch + 1)
-    
-    fig, ax = plt.subplots(figsize=figsize)
-    
-    x = np.arange(len(thresholds))
-    width = 0.35
-    
-    ax.bar(x - width/2, std_epochs, width, label='Standard NN')
-    ax.bar(x + width/2, np_epochs, width, label='NP NN')
-    
-    for i, (std_ep, np_ep) in enumerate(zip(std_epochs, np_epochs)):
-        diff = std_ep - np_ep
-        color = 'green' if diff > 0 else 'red'
-        ax.annotate(
-            f"Diff: {diff}",
-            xy=(i, max(std_ep, np_ep) + 5),
-            ha='center',
-            va='bottom',
-            color=color,
-            weight='bold'
-        )
-    
-    ax.set_xlabel('Accuracy Threshold')
-    ax.set_ylabel('Epochs to Reach Threshold')
-    ax.set_title('Convergence Speed Comparison')
-    ax.set_xticks(x)
-    ax.set_xticklabels([f"{t*100}%" for t in thresholds])
-    ax.legend()
-    ax.grid(True, linestyle='--', alpha=0.6)
-    
-    plt.tight_layout()
-    plt.savefig(f'Images/convergence_{idn}.png', dpi=150, bbox_inches='tight')
-    plt.close()
-    
-    return pd.DataFrame({
-        'Accuracy Threshold': [f"{t*100}%" for t in thresholds],
-        'Standard NN Epochs': std_epochs,
-        'NP NN Epochs': np_epochs,
-        'Difference (Std - NP)': np.array(std_epochs) - np.array(np_epochs)
-    })
-
-def save_summary_table(results, convergence_df, idn):
+def save_summary_table(results, idn):
     summary_text = ""
     summary_text += "===== MODEL PERFORMANCE SUMMARY =====\n\n"
     
@@ -343,8 +208,6 @@ def save_summary_table(results, convergence_df, idn):
     })
     
     summary_text += metrics_table.to_string(index=False) + "\n\n"
-    summary_text += "===== CONVERGENCE SPEED ANALYSIS =====\n\n"
-    summary_text += convergence_df.to_string(index=False) + "\n\n"
 
     auc_table = pd.DataFrame({
         'Class': list(range(10)) + ['Micro-Average'],
@@ -364,18 +227,18 @@ def save_metrics_json(results, idn):
     metrics_data = {
         'idn': idn,
         'standard_nn': {
-            'accuracy': results[0]['accuracy'],
-            'precision': results[0]['precision'],
-            'recall': results[0]['recall'],
-            'f1': results[0]['f1'],
-            'inference_time': results[0]['inference_time']
+            'accuracy': float(results[0]['accuracy']),
+            'precision': float(results[0]['precision']),
+            'recall': float(results[0]['recall']),
+            'f1': float(results[0]['f1']),
+            'inference_time': float(results[0]['inference_time'])
         },
         'np_nn': {
-            'accuracy': results[1]['accuracy'],
-            'precision': results[1]['precision'],
-            'recall': results[1]['recall'],
-            'f1': results[1]['f1'],
-            'inference_time': results[1]['inference_time']
+            'accuracy': float(results[1]['accuracy']),
+            'precision': float(results[1]['precision']),
+            'recall': float(results[1]['recall']),
+            'f1': float(results[1]['f1']),
+            'inference_time': float(results[1]['inference_time'])
         }
     }
     
@@ -418,12 +281,12 @@ def plot_final_metrics():
                 np_values = [d['np_nn'][metric] for d in data]
                 
                 dataset_names.append(dataset_name)
-                std_means.append(np.mean(std_values))
-                std_stds.append(np.std(std_values))
-                np_means.append(np.mean(np_values))
-                np_stds.append(np.std(np_values))
+                std_means.append(numpy_lib.mean(std_values))
+                std_stds.append(numpy_lib.std(std_values))
+                np_means.append(numpy_lib.mean(np_values))
+                np_stds.append(numpy_lib.std(np_values))
 
-        x = np.arange(len(dataset_names))
+        x = numpy_lib.arange(len(dataset_names))
         width = 0.35
 
         bars1 = ax.bar(x - width/2, std_means, width, yerr=std_stds, label='Standard NN',
@@ -468,7 +331,7 @@ def plot_final_metrics():
         
         std_acc = [d['standard_nn']['accuracy'] for d in data]
         np_acc = [d['np_nn']['accuracy'] for d in data]
-        indices = np.arange(1, len(data) + 1)
+        indices = numpy_lib.arange(1, len(data) + 1)
 
         ax.plot(indices, std_acc, label='Standard NN', marker='o', linestyle='-', linewidth=2, color='#1f77b4')
         ax.plot(indices, np_acc, label='NP NN', marker='s', linestyle='--', linewidth=2, color='#ff7f0e')
@@ -503,13 +366,9 @@ def process_and_save_results(idn, model_1, model_2, X_test, y_test, y_test_orig)
     results = [std_results, np_results]
 
     show_comparison_stats(acc_1, acc_2, lss_1, lss_2, idn)
-    plot_confusion_matrix(results, idn)
-    plot_roc_curves(results, idn)
     plot_summary_metrics(results, idn)
-    plot_pca_visualization(X_test, y_test_orig, results, idn)
-    convergence_df = plot_epoch_convergence(acc_1, acc_2, lss_1, lss_2, idn)
 
-    save_summary_table(results, convergence_df, idn)
+    save_summary_table(results, idn)
     save_metrics_json(results, idn)
     
     print(f"Results saved for IDN {idn}")

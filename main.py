@@ -65,42 +65,41 @@ def handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig):
     idn = i*10 + j
     print(f"Training standard neural network - IDN: {idn}...")
     std_model = NeuralNetwork(architecture)
-    std_model.train(X_train, y_train, epochs=e)
-    std_model.save_model(idn)
-    #std_model.load_model(idn)
+    #std_model.train(X_train, y_train, epochs=e)
+    #std_model.save_model(idn)
+    std_model.load_model(idn)
 
     print(f"\nTraining neuroplastic neural network - IDN: {idn}...")
     np_model = NPNeuralNetwork(architecture)
-    np_model.train(X_train, y_train, epochs=e)
-    np_model.save_model(idn)
-    #np_model.load_model(idn)
+    #np_model.train(X_train, y_train, epochs=e)
+    #np_model.save_model(idn)
+    np_model.load_model(idn)
 
     process_and_save_results(idn, std_model, np_model, X_test, y_test, y_test_orig)
 
 
 #main loop
 def main():
-    ensure_directories()
-    
-    for i in range(0, 3):
+    ensure_directories()    
+    for i in range(2, 3):
         if i == 0:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_MNIST()
-            print(f"\n\n\n TRAINING ON MNIST FOR {final_test - initial_test} TESTS \n\n\n")
+            print(f"\n\n\nTRAINING ON MNIST FOR {final_test - initial_test} TESTS \n\n\n")
         elif i == 1:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_fashion()
-            print(f"\n\n\n TRAINING ON FASHION MNIST FOR {final_test - initial_test} TESTS \n\n\n")
+            print(f"\n\n\nTRAINING ON FASHION MNIST FOR {final_test - initial_test} TESTS \n\n\n")
         elif i == 2:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_CIFAR10()
-            print(f"\n\n\n TRAINING ON CIFAR FOR {final_test - initial_test} TESTS \n\n\n")
+            print(f"\n\n\nTRAINING ON CIFAR FOR {final_test - initial_test} TESTS \n\n\n")
         else:
             #CIFAR100 removed for now
             #X_train, y_train, X_test, y_test, y_test_orig = load_data_CIFAR100()
-            print(f"\n\n\n TRAINING ON CIFAR(advanced) FOR {final_test - initial_test} TESTS \n\n\n")
+            print(f"\n\n\nTRAINING ON CIFAR(advanced) FOR {final_test - initial_test} TESTS \n\n\n")
 
         for j in range(initial_test, final_test):
             handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig)
 
-        print("\n\n\n TRAIN AND TEST LOOP FINISHED \n\n\n")
+        print("\n\n\nTRAIN AND TEST LOOP FINISHED \n\n\n")
 
     plot_final_metrics()
 

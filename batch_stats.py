@@ -1,13 +1,167 @@
-import numpy as np
+import numpy as numpy_lib
+import pandas as pd
 from tensorflow.keras.utils import to_categorical
 from scipy import stats
 import matplotlib.pyplot as plt
-from Stats import evaluate_model
+from Stats import evaluate_model, to_numpy
 from models.NNModel import NeuralNetwork
 from models.NPModel import NPNeuralNetwork
+from sklearn.decomposition import PCA
+import seaborn as sns
 from tensorflow.keras.datasets import (
     mnist, fashion_mnist, cifar10
-) 
+)
+
+def plot_batch_confusion_matrix(all_std_results, all_np_results, dataset_name, figsize=(20, 8)):
+    """Plot averaged confusion matrices across multiple runs"""
+    fig, axes = plt.subplots(1, 2, figsize=figsize)
+    
+    std_cms = numpy_lib.array([r['confusion_matrix'] for r in all_std_results])
+    np_cms = numpy_lib.array([r['confusion_matrix'] for r in all_np_results])
+    
+    std_cm_mean = numpy_lib.mean(std_cms, axis=0)
+    np_cm_mean = numpy_lib.mean(np_cms, axis=0)
+    
+    sns.heatmap(std_cm_mean, annot=True, fmt='.1f', cmap='Blues', ax=axes[0])
+    axes[0].set_title(f"Confusion Matrix - Standard NN (Mean of {len(all_std_results)} runs)")
+    axes[0].set_xlabel('Predicted Label')
+    axes[0].set_ylabel('True Label')
+    
+    sns.heatmap(np_cm_mean, annot=True, fmt='.1f', cmap='Greens', ax=axes[1])
+    axes[1].set_title(f"Confusion Matrix - NP NN (Mean of {len(all_np_results)} runs)")
+    axes[1].set_xlabel('Predicted Label')
+    axes[1].set_ylabel('True Label')
+    
+    plt.tight_layout()
+    plt.savefig(f'Images/batch_confusion_matrix_{dataset_name}.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"✅ Batch confusion matrix saved for {dataset_name}")
+
+def plot_batch_roc_curves(all_std_results, all_np_results, dataset_name, figsize=(18, 8)):
+    """Plot ROC curves with mean and std bands"""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
+    
+    std_tprs = []
+    np_tprs = []
+    mean_fpr = numpy_lib.linspace(0, 1, 100)
+    
+    for result in all_std_results:
+        interp_tpr = numpy_lib.interp(mean_fpr, result['fpr']['micro'], result['tpr']['micro'])
+        std_tprs.append(interp_tpr)
+    
+    for result in all_np_results:
+        interp_tpr = numpy_lib.interp(mean_fpr, result['fpr']['micro'], result['tpr']['micro'])
+        np_tprs.append(interp_tpr)
+    
+    std_tprs = numpy_lib.array(std_tprs)
+    np_tprs = numpy_lib.array(np_tprs)
+    
+    std_mean_tpr = numpy_lib.mean(std_tprs, axis=0)
+    std_std_tpr = numpy_lib.std(std_tprs, axis=0)
+    np_mean_tpr = numpy_lib.mean(np_tprs, axis=0)
+    np_std_tpr = numpy_lib.std(np_tprs, axis=0)
+    
+    std_mean_auc = numpy_lib.mean([r['roc_auc']['micro'] for r in all_std_results])
+    np_mean_auc = numpy_lib.mean([r['roc_auc']['micro'] for r in all_np_results])
+    
+    ax1.plot(mean_fpr, std_mean_tpr, 'b-', label=f"Standard NN (AUC = {std_mean_auc:.3f})", linewidth=2)
+    ax1.fill_between(mean_fpr, std_mean_tpr - std_std_tpr, std_mean_tpr + std_std_tpr, 
+                     alpha=0.2, color='b', label='±1 std')
+    
+    ax1.plot(mean_fpr, np_mean_tpr, 'g-', label=f"NP NN (AUC = {np_mean_auc:.3f})", linewidth=2)
+    ax1.fill_between(mean_fpr, np_mean_tpr - np_std_tpr, np_mean_tpr + np_std_tpr, 
+                     alpha=0.2, color='g', label='±1 std')
+    
+    ax1.plot([0, 1], [0, 1], 'k--')
+    ax1.set_xlim([0.0, 1.0])
+    ax1.set_ylim([0.0, 1.05])
+    ax1.set_xlabel('False Positive Rate')
+    ax1.set_ylabel('True Positive Rate')
+    ax1.set_title(f'Micro-Average ROC Curves (n={len(all_std_results)} runs)')
+    ax1.legend(loc="lower right")
+    ax1.grid(True, linestyle='--', alpha=0.6)
+    
+    n_classes = all_std_results[0]['n_classes']
+    selected_classes = list(range(min(3, n_classes)))
+    
+    for cls in selected_classes:
+        std_cls_tprs = []
+        for result in all_std_results:
+            interp_tpr = numpy_lib.interp(mean_fpr, result['fpr'][cls], result['tpr'][cls])
+            std_cls_tprs.append(interp_tpr)
+        std_cls_tprs = numpy_lib.array(std_cls_tprs)
+        std_cls_mean = numpy_lib.mean(std_cls_tprs, axis=0)
+        std_cls_auc = numpy_lib.mean([r['roc_auc'][cls] for r in all_std_results])
+        
+        np_cls_tprs = []
+        for result in all_np_results:
+            interp_tpr = numpy_lib.interp(mean_fpr, result['fpr'][cls], result['tpr'][cls])
+            np_cls_tprs.append(interp_tpr)
+        np_cls_tprs = numpy_lib.array(np_cls_tprs)
+        np_cls_mean = numpy_lib.mean(np_cls_tprs, axis=0)
+        np_cls_auc = numpy_lib.mean([r['roc_auc'][cls] for r in all_np_results])
+        
+        ax2.plot(mean_fpr, std_cls_mean, '--', label=f"Std Class {cls} (AUC={std_cls_auc:.3f})")
+        ax2.plot(mean_fpr, np_cls_mean, '-', label=f"NP Class {cls} (AUC={np_cls_auc:.3f})")
+    
+    ax2.plot([0, 1], [0, 1], 'k--')
+    ax2.set_xlim([0.0, 1.0])
+    ax2.set_ylim([0.0, 1.05])
+    ax2.set_xlabel('False Positive Rate')
+    ax2.set_ylabel('True Positive Rate')
+    ax2.set_title('Per-Class ROC Curves (Mean)')
+    ax2.legend(loc="lower right", fontsize=8)
+    ax2.grid(True, linestyle='--', alpha=0.6)
+    
+    plt.tight_layout()
+    plt.savefig(f'Images/batch_roc_curves_{dataset_name}.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"✅ Batch ROC curves saved for {dataset_name}")
+
+def plot_batch_pca_visualization(X_test, y_test_orig, all_std_results, all_np_results, dataset_name, figsize=(16, 7)):
+    """Plot PCA showing prediction consistency across runs"""
+    X_test_np = to_numpy(X_test)
+    y_test_orig_np = to_numpy(y_test_orig)
+    
+    pca = PCA(n_components=2)
+    X_test_pca = pca.fit_transform(X_test_np)
+    
+    fig, axes = plt.subplots(1, 2, figsize=figsize)
+    
+    std_correct_counts = numpy_lib.zeros(len(y_test_orig_np))
+    np_correct_counts = numpy_lib.zeros(len(y_test_orig_np))
+    
+    for result in all_std_results:
+        std_correct_counts += (result['predictions'] == y_test_orig_np).astype(int)
+    
+    for result in all_np_results:
+        np_correct_counts += (result['predictions'] == y_test_orig_np).astype(int)
+    
+    std_correct_pct = std_correct_counts / len(all_std_results)
+    np_correct_pct = np_correct_counts / len(all_np_results)
+    
+    scatter1 = axes[0].scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=std_correct_pct,
+                               cmap='RdYlGn', alpha=0.6, s=20)
+    axes[0].set_title(f"Standard NN - Prediction Consistency (n={len(all_std_results)} runs)")
+    axes[0].set_xlabel('Principal Component 1')
+    axes[0].set_ylabel('Principal Component 2')
+    cbar1 = plt.colorbar(scatter1, ax=axes[0])
+    cbar1.set_label('Fraction Correct')
+    axes[0].grid(True, linestyle='--', alpha=0.6)
+    
+    scatter2 = axes[1].scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=np_correct_pct,
+                               cmap='RdYlGn', alpha=0.6, s=20)
+    axes[1].set_title(f"NP NN - Prediction Consistency (n={len(all_np_results)} runs)")
+    axes[1].set_xlabel('Principal Component 1')
+    axes[1].set_ylabel('Principal Component 2')
+    cbar2 = plt.colorbar(scatter2, ax=axes[1])
+    cbar2.set_label('Fraction Correct')
+    axes[1].grid(True, linestyle='--', alpha=0.6)
+    
+    plt.tight_layout()
+    plt.savefig(f'Images/batch_pca_visualization_{dataset_name}.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"✅ Batch PCA visualization saved for {dataset_name}")
 
 def process_and_save_results_statistical(idn, models_1_list, models_2_list, X_test, y_test, y_test_orig):
     """
@@ -53,34 +207,33 @@ def process_and_save_results_statistical(idn, models_1_list, models_2_list, X_te
     
     return std_results_list, np_results_list
 
-def show_statistical_comparison(all_acc_1, all_acc_2, all_lss_1, all_lss_2, idn, 
-                                label_1='Standard NN', label_2='NP NN'):
+def show_statistical_comparison(all_acc_1, all_acc_2, all_lss_1, all_lss_2, idn, label_1='Standard NN', label_2='NP NN'):
     """
     Create visualization with mean, std, and confidence intervals
     """
     # Convert to numpy arrays for easier manipulation
-    all_acc_1 = np.array(all_acc_1)  # Shape: (n_runs, n_epochs)
-    all_acc_2 = np.array(all_acc_2)
-    all_lss_1 = np.array(all_lss_1)
-    all_lss_2 = np.array(all_lss_2)
+    all_acc_1 = numpy_lib.array(all_acc_1)  # Shape: (n_runs, n_epochs)
+    all_acc_2 = numpy_lib.array(all_acc_2)
+    all_lss_1 = numpy_lib.array(all_lss_1)
+    all_lss_2 = numpy_lib.array(all_lss_2)
     
     # Calculate statistics across runs
-    mean_acc_1 = np.mean(all_acc_1, axis=0) * 100
-    std_acc_1 = np.std(all_acc_1, axis=0) * 100
-    mean_acc_2 = np.mean(all_acc_2, axis=0) * 100
-    std_acc_2 = np.std(all_acc_2, axis=0) * 100
+    mean_acc_1 = numpy_lib.mean(all_acc_1, axis=0) * 100
+    std_acc_1 = numpy_lib.std(all_acc_1, axis=0) * 100
+    mean_acc_2 = numpy_lib.mean(all_acc_2, axis=0) * 100
+    std_acc_2 = numpy_lib.std(all_acc_2, axis=0) * 100
     
-    mean_lss_1 = np.mean(all_lss_1, axis=0)
-    std_lss_1 = np.std(all_lss_1, axis=0)
-    mean_lss_2 = np.mean(all_lss_2, axis=0)
-    std_lss_2 = np.std(all_lss_2, axis=0)
+    mean_lss_1 = numpy_lib.mean(all_lss_1, axis=0)
+    std_lss_1 = numpy_lib.std(all_lss_1, axis=0)
+    mean_lss_2 = numpy_lib.mean(all_lss_2, axis=0)
+    std_lss_2 = numpy_lib.std(all_lss_2, axis=0)
     
     # Calculate 95% confidence intervals
     n_runs = all_acc_1.shape[0]
-    ci_acc_1 = 1.96 * std_acc_1 / np.sqrt(n_runs)
-    ci_acc_2 = 1.96 * std_acc_2 / np.sqrt(n_runs)
-    ci_lss_1 = 1.96 * std_lss_1 / np.sqrt(n_runs)
-    ci_lss_2 = 1.96 * std_lss_2 / np.sqrt(n_runs)
+    ci_acc_1 = 1.96 * std_acc_1 / numpy_lib.sqrt(n_runs)
+    ci_acc_2 = 1.96 * std_acc_2 / numpy_lib.sqrt(n_runs)
+    ci_lss_1 = 1.96 * std_lss_1 / numpy_lib.sqrt(n_runs)
+    ci_lss_2 = 1.96 * std_lss_2 / numpy_lib.sqrt(n_runs)
     
     epochs = range(1, len(mean_acc_1) + 1)
     
@@ -171,7 +324,7 @@ def perform_significance_tests(std_results_list, np_results_list, idn):
     metrics_to_test = ['accuracy', 'precision', 'recall', 'f1', 'inference_time']
     
     print(f"\n{'='*60}")
-    print(f"Statistical Significance Tests for IDN {idn}")
+    print(f"Statistical Significance Tests for {idn}")
     print(f"{'='*60}\n")
     
     for metric in metrics_to_test:
@@ -183,13 +336,13 @@ def perform_significance_tests(std_results_list, np_results_list, idn):
             t_stat, p_value = stats.ttest_rel(std_values, np_values)
             
             # Effect size (Cohen's d for paired samples)
-            diff = np.array(std_values) - np.array(np_values)
-            cohens_d = np.mean(diff) / np.std(diff, ddof=1)
+            diff = numpy_lib.array(std_values) - numpy_lib.array(np_values)
+            cohens_d = numpy_lib.mean(diff) / numpy_lib.std(diff, ddof=1)
             
-            mean_std = np.mean(std_values)
-            mean_np = np.mean(np_values)
-            std_std = np.std(std_values, ddof=1)
-            std_np = np.std(np_values, ddof=1)
+            mean_std = numpy_lib.mean(std_values)
+            mean_np = numpy_lib.mean(np_values)
+            std_std = numpy_lib.std(std_values, ddof=1)
+            std_np = numpy_lib.std(np_values, ddof=1)
             
             print(f"{metric.upper()}:")
             print(f"  Standard NN: {mean_std:.4f} ± {std_std:.4f}")
@@ -239,12 +392,86 @@ def create_box_plots(std_results_list, np_results_list, idn):
             axes[i].text(0.5, 0.5, f'{metric} not available', 
                         ha='center', va='center', transform=axes[i].transAxes)
     
-    plt.suptitle(f'Model Performance Distributions (IDN {idn})', 
+    plt.suptitle(f'Model Performance Distributions ({idn})', 
                  fontsize=14, fontweight='bold')
     plt.tight_layout()
     plt.savefig(f'Images/boxplot_comparison_{idn}.png', dpi=200, bbox_inches='tight')
     plt.show()
     plt.close()
+
+def plot_epoch_convergence(all_acc_std, all_acc_np, dataset_name, threshold_start=0.80, threshold_end=0.99, num_thresholds=5, figsize=(12, 6)):
+    """Plot convergence with custom threshold range"""
+    all_acc_std_np = [[to_numpy(a) if hasattr(a, 'get') else a for a in acc_list] 
+                      for acc_list in all_acc_std]
+    all_acc_np_np = [[to_numpy(a) if hasattr(a, 'get') else a for a in acc_list] 
+                     for acc_list in all_acc_np]
+    
+    thresholds = numpy_lib.linspace(threshold_start, threshold_end, num_thresholds)
+    
+    std_epochs_all = []
+    np_epochs_all = []
+    
+    for threshold in thresholds:
+        std_epochs_for_threshold = []
+        np_epochs_for_threshold = []
+        
+        for acc_list in all_acc_std_np:
+            acc_arr = numpy_lib.array(acc_list)
+            epoch = numpy_lib.argmax(acc_arr >= threshold) if numpy_lib.any(acc_arr >= threshold) else len(acc_arr)
+            std_epochs_for_threshold.append(epoch + 1)
+        
+        for acc_list in all_acc_np_np:
+            acc_arr = numpy_lib.array(acc_list)
+            epoch = numpy_lib.argmax(acc_arr >= threshold) if numpy_lib.any(acc_arr >= threshold) else len(acc_arr)
+            np_epochs_for_threshold.append(epoch + 1)
+        
+        std_epochs_all.append(std_epochs_for_threshold)
+        np_epochs_all.append(np_epochs_for_threshold)
+    
+    std_means = [numpy_lib.mean(epochs) for epochs in std_epochs_all]
+    std_stds = [numpy_lib.std(epochs) for epochs in std_epochs_all]
+    np_means = [numpy_lib.mean(epochs) for epochs in np_epochs_all]
+    np_stds = [numpy_lib.std(epochs) for epochs in np_epochs_all]
+    
+    fig, ax = plt.subplots(figsize=figsize)
+    
+    x = numpy_lib.arange(len(thresholds))
+    width = 0.35
+    
+    bars1 = ax.bar(x - width/2, std_means, width, yerr=std_stds, 
+                   label='Standard NN', capsize=5, color='#1f77b4')
+    bars2 = ax.bar(x + width/2, np_means, width, yerr=np_stds, 
+                   label='NP NN', capsize=5, color='#2ca02c')
+    
+    for i, (std_m, np_m) in enumerate(zip(std_means, np_means)):
+        diff = std_m - np_m
+        color = 'green' if diff > 0 else 'red'
+        y_pos = max(std_m + std_stds[i], np_m + np_stds[i]) + 2
+        ax.annotate(f"{diff:+.1f}", xy=(i, y_pos), ha='center', va='bottom',
+                   color=color, weight='bold', fontsize=10)
+    
+    ax.set_xlabel('Accuracy Threshold', fontsize=12)
+    ax.set_ylabel('Epochs to Reach Threshold', fontsize=12)
+    ax.set_title(f'Convergence Speed - {dataset_name} (n={len(all_acc_std)} runs)', 
+                fontsize=14, weight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"{t*100:.1f}%" for t in thresholds])
+    ax.legend(fontsize=11)
+    ax.grid(True, linestyle='--', alpha=0.6, axis='y')
+    
+    plt.tight_layout()
+    plt.savefig(f'Images/batch_convergence_{dataset_name}.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"✅ Batch convergence plot saved for {dataset_name}")
+    
+    convergence_df = pd.DataFrame({
+        'Accuracy Threshold': [f"{t*100:.1f}%" for t in thresholds],
+        'Standard NN Mean': [f"{m:.1f}±{s:.1f}" for m, s in zip(std_means, std_stds)],
+        'NP NN Mean': [f"{m:.1f}±{s:.1f}" for m, s in zip(np_means, np_stds)],
+        'Difference (Std - NP)': [f"{std_m - np_m:+.1f}" for std_m, np_m in zip(std_means, np_means)]
+    })
+    
+    return convergence_df
 
 def get_test_data():
     (_, _), (X_test, y_test) = fashion_mnist.load_data()
@@ -269,17 +496,21 @@ def main():
     ]
     models_1_list = []
     models_2_list = []
-    experiment_name = "CIFAR10"
-    k = 1
-    for i in range(20, 25):
+    nn_acc = []
+    np_acc = []
+    experiment_name = "Fashion_MNIST"
+    k = 0
+    for i in range(10, 20):
         nn = NeuralNetwork(arch[k])
         nn.load_model(i)
+        nn_acc.append(nn.acc_stat)
         models_1_list.append(nn)
         np = NPNeuralNetwork(arch[k])
         np.load_model(i)
+        np_acc.append(np.acc_stat)
         models_2_list.append(np)
 
-    X_test, y_test, y_test_orig = get_cifar_data()
+    X_test, y_test, y_test_orig = get_test_data()
 
     std_results, np_results = process_and_save_results_statistical(
         idn=experiment_name,
@@ -290,8 +521,11 @@ def main():
         y_test_orig = y_test_orig
     )
 
-    # Optional: Create box plots
-    create_box_plots(std_results, np_results, experiment_name)
+    #create_box_plots(std_results, np_results, experiment_name)
+    #plot_batch_confusion_matrix(std_results, np_results, experiment_name)
+    #plot_batch_pca_visualization(X_test, y_test_orig, std_results, np_results, experiment_name)
+    plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.76, threshold_end=0.93, num_thresholds=5)
+
 
 if __name__ == "__main__":
     main()
