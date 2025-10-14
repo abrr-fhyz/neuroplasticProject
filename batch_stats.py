@@ -498,9 +498,9 @@ def main():
     models_2_list = []
     nn_acc = []
     np_acc = []
-    experiment_name = "Fashion_MNIST"
-    k = 0
-    for i in range(10, 20):
+    experiment_name = "CIFAR"
+    k = 1
+    for i in range(20, 30):
         nn = NeuralNetwork(arch[k])
         nn.load_model(i)
         nn_acc.append(nn.acc_stat)
@@ -510,7 +510,7 @@ def main():
         np_acc.append(np.acc_stat)
         models_2_list.append(np)
 
-    X_test, y_test, y_test_orig = get_test_data()
+    X_test, y_test, y_test_orig = get_cifar_data()
 
     std_results, np_results = process_and_save_results_statistical(
         idn=experiment_name,
@@ -524,7 +524,7 @@ def main():
     create_box_plots(std_results, np_results, experiment_name)
     plot_batch_confusion_matrix(std_results, np_results, experiment_name)
     plot_batch_pca_visualization(X_test, y_test_orig, std_results, np_results, experiment_name)
-    plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.76, threshold_end=0.93, num_thresholds=5)
+    #plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.76, threshold_end=0.93, num_thresholds=5)
 
 
 if __name__ == "__main__":
