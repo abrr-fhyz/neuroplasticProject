@@ -224,8 +224,8 @@ def batch_analysis(arch_idx, dataset, num_runs=5, confidence=0.95):
         model_1.load_model(1000 + arch_idx * 100 + run_idx)
         model_2.load_model(2000 + arch_idx * 100 + run_idx)
         model_3.load_model(3000 + arch_idx * 100 + run_idx)
-        model_4.load_model(arch_idx * 100 + run_idx)
-        model_5.load_model(arch_idx * 100 + run_idx)
+        model_4.load_model(train_idx * 10 + run_idx)
+        model_5.load_model(train_idx * 10 + run_idx)
         
         # Get stats
         acc_1, lss_1 = model_1.get_stats()
@@ -270,6 +270,7 @@ ds = [
 ]
 
 idx = 1
+train_idx = 2
 
 def main():
     batch_analysis(idx, ds[idx], num_runs=5, confidence=0.95)
