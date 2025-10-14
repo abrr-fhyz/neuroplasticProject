@@ -521,9 +521,9 @@ def main():
         y_test_orig = y_test_orig
     )
 
-    #create_box_plots(std_results, np_results, experiment_name)
-    #plot_batch_confusion_matrix(std_results, np_results, experiment_name)
-    #plot_batch_pca_visualization(X_test, y_test_orig, std_results, np_results, experiment_name)
+    create_box_plots(std_results, np_results, experiment_name)
+    plot_batch_confusion_matrix(std_results, np_results, experiment_name)
+    plot_batch_pca_visualization(X_test, y_test_orig, std_results, np_results, experiment_name)
     plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.76, threshold_end=0.93, num_thresholds=5)
 
 

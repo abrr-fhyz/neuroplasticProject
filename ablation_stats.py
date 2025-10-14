@@ -1,121 +1,278 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import stats
 from models.NNModel import NeuralNetwork
 from models.NPModel import NPNeuralNetwork
 
-def show_comparison_stats(acc_1, acc_2, lss_1, lss_2, acc_3, lss_3, acc_4, lss_4, acc_5, lss_5, idn, label_1='Pruning/genesis', label_2='Adaptive LR', label_3='Hebbian', label_4='Full NPNN', label_5='Standard NN'):
-    epochs = range(1, len(acc_1) + 1)
-    acc_1_percent = [a * 100 for a in acc_1]
-    acc_2_percent = [a * 100 for a in acc_2]
-    acc_3_percent = [a * 100 for a in acc_3]
-    acc_4_percent = [a * 100 for a in acc_4]
-    acc_5_percent = [a * 100 for a in acc_5]
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+def compute_confidence_interval(data, confidence=0.95):
+    data_array = np.array(data)
+    mean = np.mean(data_array, axis=0)
+    sem = stats.sem(data_array, axis=0)
+    ci = sem * stats.t.ppf((1 + confidence) / 2, len(data_array) - 1)
+    return mean, mean - ci, mean + ci
 
-    ax1.plot(epochs, acc_1_percent, label=f'{label_1} Accuracy', color='blue')
-    ax1.plot(epochs, acc_2_percent, label=f'{label_2} Accuracy', color='green')
-    ax1.plot(epochs, acc_3_percent, label=f'{label_3} Accuracy', color='orange')
-    ax1.plot(epochs, acc_4_percent, label=f'{label_4} Accuracy', color='black')
-    ax1.plot(epochs, acc_5_percent, label=f'{label_5} Accuracy', color='red')
-    ax1.plot(epochs[-1], acc_1_percent[-1], 'o', color='blue')
-    ax1.plot(epochs[-1], acc_2_percent[-1], 'o', color='green')
-    ax1.plot(epochs[-1], acc_3_percent[-1], 'o', color='orange')
-    ax1.plot(epochs[-1], acc_4_percent[-1], 'o', color='black')
-    ax1.plot(epochs[-1], acc_5_percent[-1], 'o', color='red')
-    ax1.annotate(f'{acc_1_percent[-1]:.2f}%', (epochs[-1], acc_1_percent[-1]),
-                 textcoords="offset points", xytext=(-30,10), ha='center',
-                 fontsize=8, color='blue',
-                 arrowprops=dict(arrowstyle='->', color='blue'))
-    ax1.annotate(f'{acc_2_percent[-1]:.2f}%', (epochs[-1], acc_2_percent[-1]),
-                 textcoords="offset points", xytext=(30,10), ha='center',
-                 fontsize=8, color='green',
-                 arrowprops=dict(arrowstyle='->', color='green'))
-    ax1.annotate(f'{acc_3_percent[-1]:.2f}%', (epochs[-1], acc_3_percent[-1]),
-                 textcoords="offset points", xytext=(30,10), ha='center',
-                 fontsize=8, color='orange',
-                 arrowprops=dict(arrowstyle='->', color='orange'))
-    ax1.annotate(f'{acc_4_percent[-1]:.2f}%', (epochs[-1], acc_4_percent[-1]),
-                 textcoords="offset points", xytext=(30,10), ha='center',
-                 fontsize=8, color='black',
-                 arrowprops=dict(arrowstyle='->', color='black'))
-    ax1.annotate(f'{acc_5_percent[-1]:.2f}%', (epochs[-1], acc_5_percent[-1]),
-                 textcoords="offset points", xytext=(30,10), ha='center',
-                 fontsize=8, color='red',
-                 arrowprops=dict(arrowstyle='->', color='red'))
-    ax1.set_ylabel('Accuracy (%)')
-    ax1.legend()
-    ax1.set_title("Model Comparison: Accuracy")
-    ax1.grid(True, linestyle='--', alpha=0.6)
-
-    ax2.plot(epochs, lss_1, label=f'{label_1} Loss', color='blue')
-    ax2.plot(epochs, lss_2, label=f'{label_2} Loss', color='green')
-    ax2.plot(epochs, lss_3, label=f'{label_3} Loss', color='orange')
-    ax2.plot(epochs, lss_4, label=f'{label_4} Loss', color='black')
-    ax2.plot(epochs, lss_5, label=f'{label_5} Loss', color='red')
-    ax2.plot(epochs[-1], lss_1[-1], 'o', color='blue')
-    ax2.plot(epochs[-1], lss_2[-1], 'o', color='green')
-    ax2.plot(epochs[-1], lss_3[-1], 'o', color='orange')
-    ax2.plot(epochs[-1], lss_4[-1], 'o', color='black')
-    ax2.plot(epochs[-1], lss_5[-1], 'o', color='red')
-    ax2.annotate(f'{lss_1[-1]:.5f}', (epochs[-1], lss_1[-1]),
-                 textcoords="offset points", xytext=(-30,-10), ha='center',
-                 fontsize=8, color='blue',
-                 arrowprops=dict(arrowstyle='->', color='blue'))
-    ax2.annotate(f'{lss_2[-1]:.5f}', (epochs[-1], lss_2[-1]),
-                 textcoords="offset points", xytext=(30,-10), ha='center',
-                 fontsize=8, color='green',
-                 arrowprops=dict(arrowstyle='->', color='green'))
-    ax2.annotate(f'{lss_3[-1]:.5f}', (epochs[-1], lss_3[-1]),
-                 textcoords="offset points", xytext=(30,-10), ha='center',
-                 fontsize=8, color='orange',
-                 arrowprops=dict(arrowstyle='->', color='orange'))
-    ax2.annotate(f'{lss_4[-1]:.5f}', (epochs[-1], lss_4[-1]),
-                 textcoords="offset points", xytext=(30,-10), ha='center',
-                 fontsize=8, color='black',
-                 arrowprops=dict(arrowstyle='->', color='black'))
-    ax2.annotate(f'{lss_5[-1]:.5f}', (epochs[-1], lss_5[-1]),
-                 textcoords="offset points", xytext=(30,-10), ha='center',
-                 fontsize=8, color='red',
-                 arrowprops=dict(arrowstyle='->', color='red'))
-    ax2.set_xlabel('Epoch')
-    ax2.set_ylabel('Loss')
-    ax2.legend()
-    ax2.set_title("Model Comparison: Loss")
-    ax2.grid(True, linestyle='--', alpha=0.6)
-
+def show_comparison_stats_with_ci(all_acc_1, all_acc_2, all_acc_3, all_acc_4, all_acc_5,
+                                   all_lss_1, all_lss_2, all_lss_3, all_lss_4, all_lss_5,
+                                   idn, dataset, confidence=0.95,
+                                   label_1='Pruning/genesis', label_2='Adaptive LR', 
+                                   label_3='Hebbian', label_4='Full NPNN', label_5='Standard NN'):
+    
+    # Compute statistics for each model
+    acc_1_mean, acc_1_lower, acc_1_upper = compute_confidence_interval(all_acc_1, confidence)
+    acc_2_mean, acc_2_lower, acc_2_upper = compute_confidence_interval(all_acc_2, confidence)
+    acc_3_mean, acc_3_lower, acc_3_upper = compute_confidence_interval(all_acc_3, confidence)
+    acc_4_mean, acc_4_lower, acc_4_upper = compute_confidence_interval(all_acc_4, confidence)
+    acc_5_mean, acc_5_lower, acc_5_upper = compute_confidence_interval(all_acc_5, confidence)
+    
+    lss_1_mean, lss_1_lower, lss_1_upper = compute_confidence_interval(all_lss_1, confidence)
+    lss_2_mean, lss_2_lower, lss_2_upper = compute_confidence_interval(all_lss_2, confidence)
+    lss_3_mean, lss_3_lower, lss_3_upper = compute_confidence_interval(all_lss_3, confidence)
+    lss_4_mean, lss_4_lower, lss_4_upper = compute_confidence_interval(all_lss_4, confidence)
+    lss_5_mean, lss_5_lower, lss_5_upper = compute_confidence_interval(all_lss_5, confidence)
+    
+    # Convert to percentages
+    acc_1_mean_percent = acc_1_mean * 100
+    acc_1_lower_percent = acc_1_lower * 100
+    acc_1_upper_percent = acc_1_upper * 100
+    
+    acc_2_mean_percent = acc_2_mean * 100
+    acc_2_lower_percent = acc_2_lower * 100
+    acc_2_upper_percent = acc_2_upper * 100
+    
+    acc_3_mean_percent = acc_3_mean * 100
+    acc_3_lower_percent = acc_3_lower * 100
+    acc_3_upper_percent = acc_3_upper * 100
+    
+    acc_4_mean_percent = acc_4_mean * 100
+    acc_4_lower_percent = acc_4_lower * 100
+    acc_4_upper_percent = acc_4_upper * 100
+    
+    acc_5_mean_percent = acc_5_mean * 100
+    acc_5_lower_percent = acc_5_lower * 100
+    acc_5_upper_percent = acc_5_upper * 100
+    
+    epochs = range(1, len(acc_1_mean) + 1)
+    
+    # Create figure
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
+    
+    # Plot accuracy with confidence intervals
+    ax1.plot(epochs, acc_1_mean_percent, label=f'{label_1}', color='blue', linewidth=2)
+    ax1.fill_between(epochs, acc_1_lower_percent, acc_1_upper_percent, 
+                      color='blue', alpha=0.2)
+    
+    ax1.plot(epochs, acc_2_mean_percent, label=f'{label_2}', color='green', linewidth=2)
+    ax1.fill_between(epochs, acc_2_lower_percent, acc_2_upper_percent, 
+                      color='green', alpha=0.2)
+    
+    ax1.plot(epochs, acc_3_mean_percent, label=f'{label_3}', color='orange', linewidth=2)
+    ax1.fill_between(epochs, acc_3_lower_percent, acc_3_upper_percent, 
+                      color='orange', alpha=0.2)
+    
+    ax1.plot(epochs, acc_4_mean_percent, label=f'{label_4}', color='black', linewidth=2)
+    ax1.fill_between(epochs, acc_4_lower_percent, acc_4_upper_percent, 
+                      color='black', alpha=0.2)
+    
+    ax1.plot(epochs, acc_5_mean_percent, label=f'{label_5}', color='red', linewidth=2)
+    ax1.fill_between(epochs, acc_5_lower_percent, acc_5_upper_percent, 
+                      color='red', alpha=0.2)
+    
+    # Add final value annotations
+    final_epoch = epochs[-1]
+    ax1.plot(final_epoch, acc_1_mean_percent[-1], 'o', color='blue', markersize=8)
+    ax1.plot(final_epoch, acc_2_mean_percent[-1], 'o', color='green', markersize=8)
+    ax1.plot(final_epoch, acc_3_mean_percent[-1], 'o', color='orange', markersize=8)
+    ax1.plot(final_epoch, acc_4_mean_percent[-1], 'o', color='black', markersize=8)
+    ax1.plot(final_epoch, acc_5_mean_percent[-1], 'o', color='red', markersize=8)
+    
+    # Annotations with CI ranges
+    ax1.annotate(f'{acc_1_mean_percent[-1]:.2f}%\n±{(acc_1_upper_percent[-1]-acc_1_mean_percent[-1]):.2f}%', 
+                 (final_epoch, acc_1_mean_percent[-1]),
+                 textcoords="offset points", xytext=(-40,10), ha='center',
+                 fontsize=7, color='blue',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='blue', alpha=0.7))
+    
+    ax1.annotate(f'{acc_2_mean_percent[-1]:.2f}%\n±{(acc_2_upper_percent[-1]-acc_2_mean_percent[-1]):.2f}%', 
+                 (final_epoch, acc_2_mean_percent[-1]),
+                 textcoords="offset points", xytext=(40,10), ha='center',
+                 fontsize=7, color='green',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='green', alpha=0.7))
+    
+    ax1.annotate(f'{acc_3_mean_percent[-1]:.2f}%\n±{(acc_3_upper_percent[-1]-acc_3_mean_percent[-1]):.2f}%', 
+                 (final_epoch, acc_3_mean_percent[-1]),
+                 textcoords="offset points", xytext=(40,-15), ha='center',
+                 fontsize=7, color='orange',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='orange', alpha=0.7))
+    
+    ax1.annotate(f'{acc_4_mean_percent[-1]:.2f}%\n±{(acc_4_upper_percent[-1]-acc_4_mean_percent[-1]):.2f}%', 
+                 (final_epoch, acc_4_mean_percent[-1]),
+                 textcoords="offset points", xytext=(40,25), ha='center',
+                 fontsize=7, color='black',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='black', alpha=0.7))
+    
+    ax1.annotate(f'{acc_5_mean_percent[-1]:.2f}%\n±{(acc_5_upper_percent[-1]-acc_5_mean_percent[-1]):.2f}%', 
+                 (final_epoch, acc_5_mean_percent[-1]),
+                 textcoords="offset points", xytext=(-40,-15), ha='center',
+                 fontsize=7, color='red',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='red', alpha=0.7))
+    
+    ax1.set_ylabel('Accuracy (%)', fontsize=12)
+    ax1.legend(loc='lower right', fontsize=10)
+    ax1.set_title(f"Model Comparison: Accuracy (n={len(all_acc_1)} runs, {int(confidence*100)}% CI)", 
+                  fontsize=14, fontweight='bold')
+    ax1.grid(True, linestyle='--', alpha=0.4)
+    
+    # Plot loss with confidence intervals
+    ax2.plot(epochs, lss_1_mean, label=f'{label_1}', color='blue', linewidth=2)
+    ax2.fill_between(epochs, lss_1_lower, lss_1_upper, color='blue', alpha=0.2)
+    
+    ax2.plot(epochs, lss_2_mean, label=f'{label_2}', color='green', linewidth=2)
+    ax2.fill_between(epochs, lss_2_lower, lss_2_upper, color='green', alpha=0.2)
+    
+    ax2.plot(epochs, lss_3_mean, label=f'{label_3}', color='orange', linewidth=2)
+    ax2.fill_between(epochs, lss_3_lower, lss_3_upper, color='orange', alpha=0.2)
+    
+    ax2.plot(epochs, lss_4_mean, label=f'{label_4}', color='black', linewidth=2)
+    ax2.fill_between(epochs, lss_4_lower, lss_4_upper, color='black', alpha=0.2)
+    
+    ax2.plot(epochs, lss_5_mean, label=f'{label_5}', color='red', linewidth=2)
+    ax2.fill_between(epochs, lss_5_lower, lss_5_upper, color='red', alpha=0.2)
+    
+    # Add final value markers
+    ax2.plot(final_epoch, lss_1_mean[-1], 'o', color='blue', markersize=8)
+    ax2.plot(final_epoch, lss_2_mean[-1], 'o', color='green', markersize=8)
+    ax2.plot(final_epoch, lss_3_mean[-1], 'o', color='orange', markersize=8)
+    ax2.plot(final_epoch, lss_4_mean[-1], 'o', color='black', markersize=8)
+    ax2.plot(final_epoch, lss_5_mean[-1], 'o', color='red', markersize=8)
+    
+    # Annotations with CI ranges for loss
+    ax2.annotate(f'{lss_1_mean[-1]:.5f}\n±{(lss_1_upper[-1]-lss_1_mean[-1]):.5f}', 
+                 (final_epoch, lss_1_mean[-1]),
+                 textcoords="offset points", xytext=(-40,-15), ha='center',
+                 fontsize=7, color='blue',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='blue', alpha=0.7))
+    
+    ax2.annotate(f'{lss_2_mean[-1]:.5f}\n±{(lss_2_upper[-1]-lss_2_mean[-1]):.5f}', 
+                 (final_epoch, lss_2_mean[-1]),
+                 textcoords="offset points", xytext=(40,-15), ha='center',
+                 fontsize=7, color='green',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='green', alpha=0.7))
+    
+    ax2.annotate(f'{lss_3_mean[-1]:.5f}\n±{(lss_3_upper[-1]-lss_3_mean[-1]):.5f}', 
+                 (final_epoch, lss_3_mean[-1]),
+                 textcoords="offset points", xytext=(40,15), ha='center',
+                 fontsize=7, color='orange',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='orange', alpha=0.7))
+    
+    ax2.annotate(f'{lss_4_mean[-1]:.5f}\n±{(lss_4_upper[-1]-lss_4_mean[-1]):.5f}', 
+                 (final_epoch, lss_4_mean[-1]),
+                 textcoords="offset points", xytext=(-40,15), ha='center',
+                 fontsize=7, color='black',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='black', alpha=0.7))
+    
+    ax2.annotate(f'{lss_5_mean[-1]:.5f}\n±{(lss_5_upper[-1]-lss_5_mean[-1]):.5f}', 
+                 (final_epoch, lss_5_mean[-1]),
+                 textcoords="offset points", xytext=(40,30), ha='center',
+                 fontsize=7, color='red',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='red', alpha=0.7))
+    
+    ax2.set_xlabel('Epoch', fontsize=12)
+    ax2.set_ylabel('Loss', fontsize=12)
+    ax2.legend(loc='upper right', fontsize=10)
+    ax2.set_title(f"Model Ablation Study: Loss (n={len(all_lss_1)} runs, {dataset} Dataset)", 
+                  fontsize=14, fontweight='bold')
+    ax2.grid(True, linestyle='--', alpha=0.4)
+    
     plt.tight_layout()
-    plt.savefig(f'Images/comparison_stats_ablation_{idn}.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'Images/comparison_stats_ablation_{dataset}.png', dpi=150, bbox_inches='tight')
     plt.show()
     plt.close()
+    
+    # Print summary statistics
+    print(f"\n{'='*60}")
+    print(f"{idn} - Summary Statistics (n={len(all_acc_1)} runs)")
+    print(f"{'='*60}")
+    print(f"\nFinal Accuracy (%):")
+    print(f"  {label_1}: {acc_1_mean_percent[-1]:.2f} ± {(acc_1_upper_percent[-1]-acc_1_mean_percent[-1]):.2f}")
+    print(f"  {label_2}: {acc_2_mean_percent[-1]:.2f} ± {(acc_2_upper_percent[-1]-acc_2_mean_percent[-1]):.2f}")
+    print(f"  {label_3}: {acc_3_mean_percent[-1]:.2f} ± {(acc_3_upper_percent[-1]-acc_3_mean_percent[-1]):.2f}")
+    print(f"  {label_4}: {acc_4_mean_percent[-1]:.2f} ± {(acc_4_upper_percent[-1]-acc_4_mean_percent[-1]):.2f}")
+    print(f"  {label_5}: {acc_5_mean_percent[-1]:.2f} ± {(acc_5_upper_percent[-1]-acc_5_mean_percent[-1]):.2f}")
+    print(f"\nFinal Loss:")
+    print(f"  {label_1}: {lss_1_mean[-1]:.5f} ± {(lss_1_upper[-1]-lss_1_mean[-1]):.5f}")
+    print(f"  {label_2}: {lss_2_mean[-1]:.5f} ± {(lss_2_upper[-1]-lss_2_mean[-1]):.5f}")
+    print(f"  {label_3}: {lss_3_mean[-1]:.5f} ± {(lss_3_upper[-1]-lss_3_mean[-1]):.5f}")
+    print(f"  {label_4}: {lss_4_mean[-1]:.5f} ± {(lss_4_upper[-1]-lss_4_mean[-1]):.5f}")
+    print(f"  {label_5}: {lss_5_mean[-1]:.5f} ± {(lss_5_upper[-1]-lss_5_mean[-1]):.5f}")
+    print(f"{'='*60}\n")
 
-def intermediate_func(model_1, model_2, model_3, model_4, model_5, idn):
-    acc_1, lss_1 = model_1.get_stats()
-    acc_2, lss_2 = model_2.get_stats()
-    acc_3, lss_3 = model_3.get_stats()
-    acc_4, lss_4 = model_4.get_stats()
-    acc_5, lss_5 = model_5.get_stats()
-    show_comparison_stats(acc_1, acc_2, lss_1, lss_2, acc_3, lss_3, acc_4, lss_4, acc_5, lss_5, idn)
+def batch_analysis(arch_idx, dataset, num_runs=5, confidence=0.95):
+    all_acc_1, all_acc_2, all_acc_3, all_acc_4, all_acc_5 = [], [], [], [], []
+    all_lss_1, all_lss_2, all_lss_3, all_lss_4, all_lss_5 = [], [], [], [], []
+    
+    for run_idx in range(num_runs):
+        print(f"  Loading run {run_idx}...", end=' ')
+        
+        # Initialize models
+        model_1 = NPNeuralNetwork(arch[arch_idx])
+        model_2 = NPNeuralNetwork(arch[arch_idx])
+        model_3 = NPNeuralNetwork(arch[arch_idx])
+        model_4 = NPNeuralNetwork(arch[arch_idx])
+        model_5 = NeuralNetwork(arch[arch_idx])
+        
+        # Load models
+        model_1.load_model(1000 + arch_idx * 100 + run_idx)
+        model_2.load_model(2000 + arch_idx * 100 + run_idx)
+        model_3.load_model(3000 + arch_idx * 100 + run_idx)
+        model_4.load_model(arch_idx * 100 + run_idx)
+        model_5.load_model(arch_idx * 100 + run_idx)
+        
+        # Get stats
+        acc_1, lss_1 = model_1.get_stats()
+        acc_2, lss_2 = model_2.get_stats()
+        acc_3, lss_3 = model_3.get_stats()
+        acc_4, lss_4 = model_4.get_stats()
+        acc_5, lss_5 = model_5.get_stats()
+        
+        # Append to lists
+        all_acc_1.append(acc_1)
+        all_acc_2.append(acc_2)
+        all_acc_3.append(acc_3)
+        all_acc_4.append(acc_4)
+        all_acc_5.append(acc_5)
+        
+        all_lss_1.append(lss_1)
+        all_lss_2.append(lss_2)
+        all_lss_3.append(lss_3)
+        all_lss_4.append(lss_4)
+        all_lss_5.append(lss_5)
+        
+        print("✓")
+    
+    print(f"All runs loaded. Generating visualization...\n")
+    
+    # Generate comparison plot with confidence intervals
+    show_comparison_stats_with_ci(
+        all_acc_1, all_acc_2, all_acc_3, all_acc_4, all_acc_5,
+        all_lss_1, all_lss_2, all_lss_3, all_lss_4, all_lss_5,
+        arch_idx, dataset, confidence
+    )
 
+# Architecture definitions
 arch = [
-    [784, 256, 128, 10],
-    [3072, 512, 256, 128, 10]
+    [784, 256, 128, 10],       # Architecture 0: MNIST-like
+    [3072, 512, 256, 128, 10]  # Architecture 1: CIFAR-like
 ]
 
-def main():
-    for i in range(0,2):
-        model_1 = NPNeuralNetwork(arch[i])
-        model_2 = NPNeuralNetwork(arch[i])
-        model_3 = NPNeuralNetwork(arch[i])
-        model_4 = NPNeuralNetwork(arch[i])
-        model_5 = NeuralNetwork(arch[i])
-        for idn in range(0, 10):
-            model_1.load_model(1000 + i*100 + idn)
-            model_2.load_model(2000 + i*100 + idn)
-            model_3.load_model(3000 + i*100 + idn)
-            model_4.load_model(idn)
-            model_5.load_model(idn)
+ds = [
+    "MNIST",
+    "CIFAR10"
+]
 
-        intermediate_func(model_1, model_2, model_3, model_4, model_5, idn)
+idx = 1
+
+def main():
+    batch_analysis(idx, ds[idx], num_runs=5, confidence=0.95)
 
 if __name__ == "__main__":
     main()

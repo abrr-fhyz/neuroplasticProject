@@ -1,5 +1,5 @@
 from tensorflow.keras.utils import to_categorical
-from models.NPModel import NPNeuralNetwork
+from models.NPGPU import NPNeuralNetwork
 
 #datasets
 from tensorflow.keras.datasets import (
@@ -26,8 +26,8 @@ def load_data_CIFAR10():
     
     return X_train, y_train, X_test, y_test, y_test_orig
 
-no_of_test = 10
-epochs = [100, 200]
+no_of_test = 5
+epochs = [100, 120]
 architectures = [
     [784, 256, 128, 10],
     [3072, 512, 256, 128, 10]
@@ -53,7 +53,7 @@ def handle_ablation_testing(i, j, X_train, y_train, X_test, y_test, y_test_orig)
     np_model_3.save_model(3000 + idn)
 
 def main():
-    for i in range(0, 2):
+    for i in range(1, 2):
         if i == 0:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_MNIST()
             print(f"\n\n\n TRAINING ON Fashion MNIST FOR {no_of_test} TESTS \n\n\n")
