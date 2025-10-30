@@ -68,7 +68,7 @@ def show_comparison_stats(acc_1, acc_2, lss_1, lss_2, idn, label_1='Standard NN'
     plt.savefig(f'Images/comparison_stats_{idn}.png', dpi=150, bbox_inches='tight')
     plt.close()
 
-def evaluate_model(model, X_test, y_test, y_test_orig, model_name):
+def evaluate_model(model, X_test, y_test, y_test_orig, model_name, n_classes = 10):
     start_time = time.time()
     preds = model.predict(X_test)
     inference_time = (time.time() - start_time) / len(X_test)
@@ -89,7 +89,6 @@ def evaluate_model(model, X_test, y_test, y_test_orig, model_name):
     r2 = r2_score(y_test_np, preds_np)
     cm = confusion_matrix(true_classes, predicted_classes)
     
-    n_classes = 10
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
@@ -141,42 +140,6 @@ def evaluate_model(model, X_test, y_test, y_test_orig, model_name):
         'tpr': tpr,
         'class_metrics': class_metrics
     }
-
-def plot_summary_metrics(results, idn, figsize=(12, 6)):
-    metrics = ['accuracy', 'precision', 'recall', 'f1']
-    
-    max_time = max(results[0]['inference_time'], results[1]['inference_time'])
-    norm_time_1 = 1 - (results[0]['inference_time'] / max_time)
-    norm_time_2 = 1 - (results[1]['inference_time'] / max_time)
-    
-    metrics.append('speed')
-    
-    values_1 = [results[0][m] for m in metrics[:-1]] + [norm_time_1]
-    values_2 = [results[1][m] for m in metrics[:-1]] + [norm_time_2]
-    
-    angles = numpy_lib.linspace(0, 2*numpy_lib.pi, len(metrics), endpoint=False).tolist()
-    angles += angles[:1] 
-    
-    values_1 += values_1[:1]
-    values_2 += values_2[:1]
-    metrics += metrics[:1]
-    
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True))
-    
-    ax.plot(angles, values_1, 'o-', linewidth=2, label=results[0]['name'])
-    ax.plot(angles, values_2, 'o-', linewidth=2, label=results[1]['name'])
-    ax.fill(angles, values_1, alpha=0.25)
-    ax.fill(angles, values_2, alpha=0.25)
-    
-    ax.set_thetagrids(numpy_lib.degrees(angles[:-1]), metrics[:-1])
-    ax.set_ylim(0, 1)
-    ax.grid(True)
-    ax.legend(loc='upper right')
-    ax.set_title('Model Performance Comparison')
-    
-    plt.tight_layout()
-    plt.savefig(f'Images/summary_metrics_{idn}.png', dpi=150, bbox_inches='tight')
-    plt.close()
 
 def save_summary_table(results, idn):
     summary_text = ""
@@ -261,7 +224,9 @@ def plot_final_metrics():
         'MNIST': [d for d in all_data if 0 <= d['idn'] <= 9],
         'Fashion MNIST': [d for d in all_data if 10 <= d['idn'] <= 19], 
         'CIFAR10': [d for d in all_data if 20 <= d['idn'] <= 29],
-        'CIFAR100': [d for d in all_data if 30 <= d['idn'] <= 39]
+        'CIFAR10 (Scaled)': [d for d in all_data if 30 <= d['idn'] <= 39],
+        'CIFAR10 (Plateau)': [d for d in all_data if 40 <= d['idn'] <= 49],
+        'CIFAR100 (Scaled)': [d for d in all_data if 50 <= d['idn'] <= 59]
     }
 
     metrics = ['accuracy', 'precision', 'recall', 'f1', 'inference_time']
@@ -281,8 +246,8 @@ def plot_final_metrics():
                 np_values = [d['np_nn'][metric] for d in data]
                 
                 dataset_names.append(dataset_name)
-                std_means.append(numpy_lib.mean(std_values))
-                std_stds.append(numpy_lib.std(std_values))
+                std_means.append(numpy_lib.median(std_values))
+                std_stds.append(numpy_lib.subtract(*numpy_lib.percentile(std_values, [75, 25])) / 2)
                 np_means.append(numpy_lib.mean(np_values))
                 np_stds.append(numpy_lib.std(np_values))
 
@@ -361,12 +326,15 @@ def process_and_save_results(idn, model_1, model_2, X_test, y_test, y_test_orig)
     acc_2, lss_2 = model_2.get_stats()
 
     print(f"\nEvaluating models for IDN {idn}...")
-    std_results = evaluate_model(model_1, X_test, y_test, y_test_orig, "Standard NN")
-    np_results = evaluate_model(model_2, X_test, y_test, y_test_orig, "NP NN")
+    n_classes = 10
+    if idn >= 50:
+        n_classes = 100
+    std_results = evaluate_model(model_1, X_test, y_test, y_test_orig, "Standard NN", n_classes)
+    np_results = evaluate_model(model_2, X_test, y_test, y_test_orig, "NP NN", n_classes)
     results = [std_results, np_results]
 
     show_comparison_stats(acc_1, acc_2, lss_1, lss_2, idn)
-    plot_summary_metrics(results, idn)
+    #plot_summary_metrics(results, idn)
 
     save_summary_table(results, idn)
     save_metrics_json(results, idn)

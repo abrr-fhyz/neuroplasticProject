@@ -12,6 +12,8 @@ from tensorflow.keras.datasets import (
     mnist, fashion_mnist, cifar10
 )
 
+from main import load_data_CIFAR10_stan, load_data_CIFAR100_stan, load_data_MNIST, load_data_fashion, load_data_CIFAR10
+
 def plot_batch_confusion_matrix(all_std_results, all_np_results, dataset_name, figsize=(20, 8)):
     """Plot averaged confusion matrices across multiple runs"""
     fig, axes = plt.subplots(1, 2, figsize=figsize)
@@ -163,7 +165,7 @@ def plot_batch_pca_visualization(X_test, y_test_orig, all_std_results, all_np_re
     plt.close()
     print(f"✅ Batch PCA visualization saved for {dataset_name}")
 
-def process_and_save_results_statistical(idn, models_1_list, models_2_list, X_test, y_test, y_test_orig):
+def process_and_save_results_statistical(idn, models_1_list, models_2_list, X_test, y_test, y_test_orig, n_classes):
     """
     Process multiple model runs and perform statistical analysis
     
@@ -193,8 +195,8 @@ def process_and_save_results_statistical(idn, models_1_list, models_2_list, X_te
         all_lss_2.append(lss_2)
         
         # Evaluate each model
-        std_results = evaluate_model(model_1, X_test, y_test, y_test_orig, f"Standard NN Run {i+1}")
-        np_results = evaluate_model(model_2, X_test, y_test, y_test_orig, f"NP NN Run {i+1}")
+        std_results = evaluate_model(model_1, X_test, y_test, y_test_orig, f"Standard NN Run {i+1}", n_classes)
+        np_results = evaluate_model(model_2, X_test, y_test, y_test_orig, f"NP NN Run {i+1}", n_classes)
         
         std_results_list.append(std_results)
         np_results_list.append(np_results)
@@ -473,34 +475,20 @@ def plot_epoch_convergence(all_acc_std, all_acc_np, dataset_name, threshold_star
     
     return convergence_df
 
-def get_test_data():
-    (_, _), (X_test, y_test) = fashion_mnist.load_data()
-    X_test = X_test.reshape(-1, 784) / 255.0
-    y_test_orig = y_test.flatten() if y_test.ndim > 1 else y_test
-    y_test = to_categorical(y_test, 10)
-    
-    return X_test, y_test, y_test_orig
-
-def get_cifar_data():
-    (_, _), (X_test, y_test) = cifar10.load_data()
-    X_test = X_test.reshape(-1, 3072) / 255.0
-    y_test_orig = y_test.flatten() if y_test.ndim > 1 else y_test
-    y_test = to_categorical(y_test, 10)
-    
-    return X_test, y_test, y_test_orig
-
 def main():
     arch = [ 
         [784, 256, 128, 10],
-        [3072, 512, 256, 128, 10]
+        [3072, 512, 256, 128, 10],
+        [3072, 512, 256, 128, 100]
     ]
     models_1_list = []
     models_2_list = []
     nn_acc = []
     np_acc = []
-    experiment_name = "CIFAR"
+    experiment_name = "CIFAR10_Scaled"
     k = 1
-    for i in range(20, 30):
+    n_c = 10
+    for i in range(30, 40):
         nn = NeuralNetwork(arch[k])
         nn.load_model(i)
         nn_acc.append(nn.acc_stat)
@@ -510,7 +498,7 @@ def main():
         np_acc.append(np.acc_stat)
         models_2_list.append(np)
 
-    X_test, y_test, y_test_orig = get_cifar_data()
+    _, _, X_test, y_test, y_test_orig = load_data_CIFAR10_stan()
 
     std_results, np_results = process_and_save_results_statistical(
         idn=experiment_name,
@@ -518,13 +506,14 @@ def main():
         models_2_list=models_2_list,
         X_test = X_test,
         y_test = y_test,
-        y_test_orig = y_test_orig
+        y_test_orig = y_test_orig,
+        n_classes=n_c
     )
 
     create_box_plots(std_results, np_results, experiment_name)
     plot_batch_confusion_matrix(std_results, np_results, experiment_name)
     plot_batch_pca_visualization(X_test, y_test_orig, std_results, np_results, experiment_name)
-    #plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.76, threshold_end=0.93, num_thresholds=5)
+    plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.35, threshold_end=0.85, num_thresholds=5)
 
 
 if __name__ == "__main__":
