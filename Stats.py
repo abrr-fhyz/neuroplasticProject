@@ -248,8 +248,8 @@ def plot_final_metrics():
                 dataset_names.append(dataset_name)
                 std_means.append(numpy_lib.median(std_values))
                 std_stds.append(numpy_lib.subtract(*numpy_lib.percentile(std_values, [75, 25])) / 2)
-                np_means.append(numpy_lib.mean(np_values))
-                np_stds.append(numpy_lib.std(np_values))
+                np_means.append(numpy_lib.median(np_values))
+                np_stds.append(numpy_lib.subtract(*numpy_lib.percentile(np_values, [75, 25])) / 2)
 
         x = numpy_lib.arange(len(dataset_names))
         width = 0.35

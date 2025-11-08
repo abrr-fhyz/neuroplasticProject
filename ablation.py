@@ -6,6 +6,8 @@ from tensorflow.keras.datasets import (
     fashion_mnist, cifar10
 ) 
 
+from main import load_data_CIFAR100_stan
+
 def load_data_MNIST():
     (X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
     X_test = X_test.reshape(-1, 784) / 255.0
@@ -27,10 +29,11 @@ def load_data_CIFAR10():
     return X_train, y_train, X_test, y_test, y_test_orig
 
 no_of_test = 5
-epochs = [100, 120]
+epochs = [100, 120, 70]
 architectures = [
     [784, 256, 128, 10],
-    [3072, 512, 256, 128, 10]
+    [3072, 512, 256, 128, 10],
+    [3072, 512, 256, 128, 100]
 ]
 
 def handle_ablation_testing(i, j, X_train, y_train, X_test, y_test, y_test_orig):
@@ -53,13 +56,16 @@ def handle_ablation_testing(i, j, X_train, y_train, X_test, y_test, y_test_orig)
     np_model_3.save_model(3000 + idn)
 
 def main():
-    for i in range(1, 2):
+    for i in range(2, 3):
         if i == 0:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_MNIST()
             print(f"\n\n\n TRAINING ON Fashion MNIST FOR {no_of_test} TESTS \n\n\n")
-        else:
+        elif i == 1:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_CIFAR10()
             print(f"\n\n\n TRAINING ON CIFAR FOR {no_of_test} TESTS \n\n\n")
+        else:
+            X_train, y_train, X_test, y_test, y_test_orig = load_data_CIFAR100_stan()
+            print(f"\n\n\n TRAINING ON CIFAR100 FOR {no_of_test} TESTS \n\n\n")
 
         for j in range(no_of_test):
             handle_ablation_testing(i, j, X_train, y_train, X_test, y_test, y_test_orig)

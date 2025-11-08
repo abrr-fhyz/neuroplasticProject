@@ -2,6 +2,5 @@
 Images/*
 artifacts/*
 logs/*
-*.txt
 test.py
 models/prototype.py

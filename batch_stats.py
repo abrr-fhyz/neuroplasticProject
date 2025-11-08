@@ -14,6 +14,23 @@ from tensorflow.keras.datasets import (
 
 from main import load_data_CIFAR10_stan, load_data_CIFAR100_stan, load_data_MNIST, load_data_fashion, load_data_CIFAR10
 
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.size'] = 11
+plt.rcParams['axes.labelsize'] = 13
+plt.rcParams['axes.titlesize'] = 14
+plt.rcParams['xtick.labelsize'] = 11
+plt.rcParams['ytick.labelsize'] = 11
+plt.rcParams['legend.fontsize'] = 11
+plt.rcParams['figure.titlesize'] = 15
+
+# Color scheme
+COLORS = {
+    'standard': '#1f77b4',      # Blue
+    'standard_light': '#aec7e8', # Light blue
+    'np': '#d62728',             # Red
+    'np_light': '#ff9896'        # Light red
+}
+
 def plot_batch_confusion_matrix(all_std_results, all_np_results, dataset_name, figsize=(20, 8)):
     """Plot averaged confusion matrices across multiple runs"""
     fig, axes = plt.subplots(1, 2, figsize=figsize)
@@ -209,114 +226,6 @@ def process_and_save_results_statistical(idn, models_1_list, models_2_list, X_te
     
     return std_results_list, np_results_list
 
-def show_statistical_comparison(all_acc_1, all_acc_2, all_lss_1, all_lss_2, idn, label_1='Standard NN', label_2='NP NN'):
-    """
-    Create visualization with mean, std, and confidence intervals
-    """
-    # Convert to numpy arrays for easier manipulation
-    all_acc_1 = numpy_lib.array(all_acc_1)  # Shape: (n_runs, n_epochs)
-    all_acc_2 = numpy_lib.array(all_acc_2)
-    all_lss_1 = numpy_lib.array(all_lss_1)
-    all_lss_2 = numpy_lib.array(all_lss_2)
-    
-    # Calculate statistics across runs
-    mean_acc_1 = numpy_lib.mean(all_acc_1, axis=0) * 100
-    std_acc_1 = numpy_lib.std(all_acc_1, axis=0) * 100
-    mean_acc_2 = numpy_lib.mean(all_acc_2, axis=0) * 100
-    std_acc_2 = numpy_lib.std(all_acc_2, axis=0) * 100
-    
-    mean_lss_1 = numpy_lib.mean(all_lss_1, axis=0)
-    std_lss_1 = numpy_lib.std(all_lss_1, axis=0)
-    mean_lss_2 = numpy_lib.mean(all_lss_2, axis=0)
-    std_lss_2 = numpy_lib.std(all_lss_2, axis=0)
-    
-    # Calculate 95% confidence intervals
-    n_runs = all_acc_1.shape[0]
-    ci_acc_1 = 1.96 * std_acc_1 / numpy_lib.sqrt(n_runs)
-    ci_acc_2 = 1.96 * std_acc_2 / numpy_lib.sqrt(n_runs)
-    ci_lss_1 = 1.96 * std_lss_1 / numpy_lib.sqrt(n_runs)
-    ci_lss_2 = 1.96 * std_lss_2 / numpy_lib.sqrt(n_runs)
-    
-    epochs = range(1, len(mean_acc_1) + 1)
-    
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
-    
-    # Plot accuracy with confidence intervals
-    ax1.plot(epochs, mean_acc_1, label=f'{label_1} (mean)', color='blue', linewidth=2)
-    ax1.fill_between(epochs, mean_acc_1 - ci_acc_1, mean_acc_1 + ci_acc_1, 
-                     color='blue', alpha=0.2, label=f'{label_1} 95% CI')
-    
-    ax1.plot(epochs, mean_acc_2, label=f'{label_2} (mean)', color='green', linewidth=2)
-    ax1.fill_between(epochs, mean_acc_2 - ci_acc_2, mean_acc_2 + ci_acc_2, 
-                     color='green', alpha=0.2, label=f'{label_2} 95% CI')
-    
-    # Annotate final values
-    ax1.plot(epochs[-1], mean_acc_1[-1], 'o', color='blue', markersize=8)
-    ax1.plot(epochs[-1], mean_acc_2[-1], 'o', color='green', markersize=8)
-    
-    ax1.annotate(f'{mean_acc_1[-1]:.2f}% ± {std_acc_1[-1]:.2f}%', 
-                 (epochs[-1], mean_acc_1[-1]),
-                 textcoords="offset points", xytext=(-40, 15), ha='center',
-                 fontsize=9, color='blue', fontweight='bold',
-                 arrowprops=dict(arrowstyle='->', color='blue'))
-    ax1.annotate(f'{mean_acc_2[-1]:.2f}% ± {std_acc_2[-1]:.2f}%', 
-                 (epochs[-1], mean_acc_2[-1]),
-                 textcoords="offset points", xytext=(40, 15), ha='center',
-                 fontsize=9, color='green', fontweight='bold',
-                 arrowprops=dict(arrowstyle='->', color='green'))
-    
-    ax1.set_ylabel('Accuracy (%)', fontsize=11)
-    ax1.legend(loc='best', fontsize=9)
-    ax1.set_title(f"Model Comparison: Accuracy (n={n_runs} runs)", fontsize=12, fontweight='bold')
-    ax1.grid(True, linestyle='--', alpha=0.6)
-    
-    # Plot loss with confidence intervals
-    ax2.plot(epochs, mean_lss_1, label=f'{label_1} (mean)', color='red', linewidth=2)
-    ax2.fill_between(epochs, mean_lss_1 - ci_lss_1, mean_lss_1 + ci_lss_1, 
-                     color='red', alpha=0.2, label=f'{label_1} 95% CI')
-    
-    ax2.plot(epochs, mean_lss_2, label=f'{label_2} (mean)', color='orange', linewidth=2)
-    ax2.fill_between(epochs, mean_lss_2 - ci_lss_2, mean_lss_2 + ci_lss_2, 
-                     color='orange', alpha=0.2, label=f'{label_2} 95% CI')
-    
-    # Annotate final values
-    ax2.plot(epochs[-1], mean_lss_1[-1], 'o', color='red', markersize=8)
-    ax2.plot(epochs[-1], mean_lss_2[-1], 'o', color='orange', markersize=8)
-    
-    ax2.annotate(f'{mean_lss_1[-1]:.5f} ± {std_lss_1[-1]:.5f}', 
-                 (epochs[-1], mean_lss_1[-1]),
-                 textcoords="offset points", xytext=(-40, -15), ha='center',
-                 fontsize=9, color='red', fontweight='bold',
-                 arrowprops=dict(arrowstyle='->', color='red'))
-    ax2.annotate(f'{mean_lss_2[-1]:.5f} ± {std_lss_2[-1]:.5f}', 
-                 (epochs[-1], mean_lss_2[-1]),
-                 textcoords="offset points", xytext=(40, -15), ha='center',
-                 fontsize=9, color='orange', fontweight='bold',
-                 arrowprops=dict(arrowstyle='->', color='orange'))
-    
-    ax2.set_xlabel('Epoch', fontsize=11)
-    ax2.set_ylabel('Loss', fontsize=11)
-    ax2.legend(loc='best', fontsize=9)
-    ax2.set_title(f"Model Comparison: Loss (n={n_runs} runs)", fontsize=12, fontweight='bold')
-    ax2.grid(True, linestyle='--', alpha=0.6)
-    
-    plt.tight_layout()
-    plt.savefig(f'Images/statistical_comparison_{idn}.png', dpi=200, bbox_inches='tight')
-    plt.show()
-    plt.close()
-    
-    # Print summary statistics
-    print(f"\n{'='*60}")
-    print(f"Statistical Summary for IDN {idn}")
-    print(f"{'='*60}")
-    print(f"\nFinal Accuracy (%):")
-    print(f"  {label_1}: {mean_acc_1[-1]:.2f} ± {std_acc_1[-1]:.2f}")
-    print(f"  {label_2}: {mean_acc_2[-1]:.2f} ± {std_acc_2[-1]:.2f}")
-    print(f"\nFinal Loss:")
-    print(f"  {label_1}: {mean_lss_1[-1]:.5f} ± {std_lss_1[-1]:.5f}")
-    print(f"  {label_2}: {mean_lss_2[-1]:.5f} ± {std_lss_2[-1]:.5f}")
-    print(f"{'='*60}\n")
-
 def perform_significance_tests(std_results_list, np_results_list, idn):
     """
     Perform statistical significance tests on model results
@@ -365,11 +274,11 @@ def perform_significance_tests(std_results_list, np_results_list, idn):
 
 def create_box_plots(std_results_list, np_results_list, idn):
     """
-    Create box plots comparing distributions of metrics
+    Create publication-quality box plots comparing distributions of metrics
     """
     metrics = ['accuracy', 'precision', 'recall', 'f1']
     
-    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    fig, axes = plt.subplots(2, 2, figsize=(14, 11))
     axes = axes.flatten()
     
     for i, metric in enumerate(metrics):
@@ -380,33 +289,53 @@ def create_box_plots(std_results_list, np_results_list, idn):
             bp = axes[i].boxplot([std_values, np_values], 
                                  labels=['Standard NN', 'NP NN'],
                                  patch_artist=True,
-                                 showmeans=True)
+                                 showmeans=True,
+                                 widths=0.25,
+                                 meanprops=dict(marker='D', markerfacecolor='yellow', 
+                                              markeredgecolor='black', markersize=8),
+                                 medianprops=dict(linewidth=2.5, color='black'),
+                                 boxprops=dict(linewidth=2),
+                                 whiskerprops=dict(linewidth=2),
+                                 capprops=dict(linewidth=2))
             
-            # Color the boxes
-            bp['boxes'][0].set_facecolor('lightblue')
-            bp['boxes'][1].set_facecolor('lightgreen')
+            # Color the boxes with consistent scheme
+            bp['boxes'][0].set_facecolor(COLORS['standard_light'])
+            bp['boxes'][0].set_edgecolor(COLORS['standard'])
+            bp['boxes'][1].set_facecolor(COLORS['np_light'])
+            bp['boxes'][1].set_edgecolor(COLORS['np'])
             
-            axes[i].set_ylabel(f'{metric.capitalize()} (%)')
-            axes[i].set_title(f'{metric.capitalize()} Distribution')
-            axes[i].grid(True, linestyle='--', alpha=0.6, axis='y')
+            axes[i].set_ylabel(f'{metric.capitalize()} (%)', fontsize=13, fontweight='bold')
+            axes[i].set_title(f'{metric.capitalize()} Distribution', 
+                            fontsize=14, fontweight='bold', pad=12)
+            axes[i].grid(True, linestyle='--', alpha=0.4, axis='y', linewidth=0.8)
+            axes[i].spines['top'].set_visible(False)
+            axes[i].spines['right'].set_visible(False)
             
         except KeyError:
             axes[i].text(0.5, 0.5, f'{metric} not available', 
-                        ha='center', va='center', transform=axes[i].transAxes)
+                        ha='center', va='center', transform=axes[i].transAxes,
+                        fontsize=13, color='gray')
     
     plt.suptitle(f'Model Performance Distributions ({idn})', 
-                 fontsize=14, fontweight='bold')
+                 fontsize=16, fontweight='bold', y=0.995)
     plt.tight_layout()
-    plt.savefig(f'Images/boxplot_comparison_{idn}.png', dpi=200, bbox_inches='tight')
+    plt.savefig(f'Images/boxplot_comparison_{idn}.png', dpi=300, bbox_inches='tight')
     plt.show()
     plt.close()
 
-def plot_epoch_convergence(all_acc_std, all_acc_np, dataset_name, threshold_start=0.80, threshold_end=0.99, num_thresholds=5, figsize=(12, 6)):
-    """Plot convergence with custom threshold range"""
-    all_acc_std_np = [[to_numpy(a) if hasattr(a, 'get') else a for a in acc_list] 
-                      for acc_list in all_acc_std]
-    all_acc_np_np = [[to_numpy(a) if hasattr(a, 'get') else a for a in acc_list] 
-                     for acc_list in all_acc_np]
+def plot_epoch_convergence(all_acc_std, all_acc_np, dataset_name, 
+                          threshold_start=0.80, threshold_end=0.99, 
+                          num_thresholds=5, figsize=(14, 7)):
+    """Plot publication-quality convergence with custom threshold range"""
+    
+    def to_numpy(x):
+        """Helper to convert to numpy"""
+        if hasattr(x, 'get'):
+            return x.get()
+        return x
+    
+    all_acc_std_np = [[to_numpy(a) for a in acc_list] for acc_list in all_acc_std]
+    all_acc_np_np = [[to_numpy(a) for a in acc_list] for acc_list in all_acc_np]
     
     thresholds = numpy_lib.linspace(threshold_start, threshold_end, num_thresholds)
     
@@ -438,42 +367,199 @@ def plot_epoch_convergence(all_acc_std, all_acc_np, dataset_name, threshold_star
     fig, ax = plt.subplots(figsize=figsize)
     
     x = numpy_lib.arange(len(thresholds))
-    width = 0.35
+    width = 0.38
     
     bars1 = ax.bar(x - width/2, std_means, width, yerr=std_stds, 
-                   label='Standard NN', capsize=5, color='#1f77b4')
+                   label='Standard NN', capsize=6, color=COLORS['standard'],
+                   edgecolor='black', linewidth=1.5, error_kw={'linewidth': 2})
     bars2 = ax.bar(x + width/2, np_means, width, yerr=np_stds, 
-                   label='NP NN', capsize=5, color='#2ca02c')
+                   label='NP NN', capsize=6, color=COLORS['np'],
+                   edgecolor='black', linewidth=1.5, error_kw={'linewidth': 2})
     
+    # Add value labels on bars
+    for i, (bar1, bar2, std_m, np_m) in enumerate(zip(bars1, bars2, std_means, np_means)):
+        height1 = bar1.get_height()
+        height2 = bar2.get_height()
+        ax.text(bar1.get_x() + bar1.get_width()/2., height1 + std_stds[i] + 0.5,
+                f'{std_m:.1f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+        ax.text(bar2.get_x() + bar2.get_width()/2., height2 + np_stds[i] + 0.5,
+                f'{np_m:.1f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+    
+    # Add improvement annotations
     for i, (std_m, np_m) in enumerate(zip(std_means, np_means)):
         diff = std_m - np_m
-        color = 'green' if diff > 0 else 'red'
-        y_pos = max(std_m + std_stds[i], np_m + np_stds[i]) + 2
-        ax.annotate(f"{diff:+.1f}", xy=(i, y_pos), ha='center', va='bottom',
-                   color=color, weight='bold', fontsize=10)
+        if abs(diff) > 0.1:  # Only show if difference is meaningful
+            color = 'green' if diff > 0 else 'red'
+            y_pos = max(std_m + std_stds[i], np_m + np_stds[i]) + 3
+            ax.annotate(f"{diff:+.1f}", xy=(i, y_pos), ha='center', va='bottom',
+                       color=color, weight='bold', fontsize=12,
+                       bbox=dict(boxstyle='round,pad=0.4', facecolor='white', 
+                                edgecolor=color, alpha=0.9, linewidth=2))
     
-    ax.set_xlabel('Accuracy Threshold', fontsize=12)
-    ax.set_ylabel('Epochs to Reach Threshold', fontsize=12)
-    ax.set_title(f'Convergence Speed - {dataset_name} (n={len(all_acc_std)} runs)', 
-                fontsize=14, weight='bold')
+    ax.set_xlabel('Accuracy Threshold', fontsize=14, fontweight='bold')
+    ax.set_ylabel('Epochs to Reach Threshold', fontsize=14, fontweight='bold')
+    ax.set_title(f'Convergence Speed Analysis - {dataset_name} (n={len(all_acc_std)} runs)', 
+                fontsize=16, weight='bold', pad=15)
     ax.set_xticks(x)
-    ax.set_xticklabels([f"{t*100:.1f}%" for t in thresholds])
-    ax.legend(fontsize=11)
-    ax.grid(True, linestyle='--', alpha=0.6, axis='y')
+    ax.set_xticklabels([f"{t*100:.0f}%" for t in thresholds], fontsize=12)
+    ax.legend(fontsize=13, frameon=True, shadow=True, loc='best')
+    ax.grid(True, linestyle='--', alpha=0.4, axis='y', linewidth=0.8)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     
     plt.tight_layout()
-    plt.savefig(f'Images/batch_convergence_{dataset_name}.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'Images/batch_convergence_{dataset_name}.png', dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"✅ Batch convergence plot saved for {dataset_name}")
+    print(f"✅ Publication-quality convergence plot saved for {dataset_name}")
     
     convergence_df = pd.DataFrame({
-        'Accuracy Threshold': [f"{t*100:.1f}%" for t in thresholds],
+        'Accuracy Threshold': [f"{t*100:.0f}%" for t in thresholds],
         'Standard NN Mean': [f"{m:.1f}±{s:.1f}" for m, s in zip(std_means, std_stds)],
         'NP NN Mean': [f"{m:.1f}±{s:.1f}" for m, s in zip(np_means, np_stds)],
-        'Difference (Std - NP)': [f"{std_m - np_m:+.1f}" for std_m, np_m in zip(std_means, np_means)]
+        'Difference (Std - NP)': [f"{std_m - np_m:+.1f}" for std_m, np_m in zip(std_means, np_means)],
+        'Improvement': [f"{((std_m - np_m)/std_m*100):+.1f}%" if std_m > 0 else "N/A" 
+                       for std_m, np_m in zip(std_means, np_means)]
     })
     
     return convergence_df
+
+def show_statistical_comparison(all_acc_1, all_acc_2, all_lss_1, all_lss_2, idn,
+                                label_1='Standard NN', label_2='NP NN'):
+    """
+    Create publication-quality visualization with mean, std, and confidence intervals
+    """
+    # Convert to numpy arrays for easier manipulation
+    all_acc_1 = numpy_lib.array(all_acc_1)  # Shape: (n_runs, n_epochs)
+    all_acc_2 = numpy_lib.array(all_acc_2)
+    all_lss_1 = numpy_lib.array(all_lss_1)
+    all_lss_2 = numpy_lib.array(all_lss_2)
+    
+    # Calculate statistics across runs
+    mean_acc_1 = numpy_lib.mean(all_acc_1, axis=0) * 100
+    std_acc_1 = numpy_lib.std(all_acc_1, axis=0) * 100
+    mean_acc_2 = numpy_lib.mean(all_acc_2, axis=0) * 100
+    std_acc_2 = numpy_lib.std(all_acc_2, axis=0) * 100
+    
+    mean_lss_1 = numpy_lib.mean(all_lss_1, axis=0)
+    std_lss_1 = numpy_lib.std(all_lss_1, axis=0)
+    mean_lss_2 = numpy_lib.mean(all_lss_2, axis=0)
+    std_lss_2 = numpy_lib.std(all_lss_2, axis=0)
+    
+    # Calculate 95% confidence intervals
+    n_runs = all_acc_1.shape[0]
+    ci_acc_1 = 1.96 * std_acc_1 / numpy_lib.sqrt(n_runs)
+    ci_acc_2 = 1.96 * std_acc_2 / numpy_lib.sqrt(n_runs)
+    ci_lss_1 = 1.96 * std_lss_1 / numpy_lib.sqrt(n_runs)
+    ci_lss_2 = 1.96 * std_lss_2 / numpy_lib.sqrt(n_runs)
+    
+    epochs = range(1, len(mean_acc_1) + 1)
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+    
+    # Plot accuracy with confidence intervals
+    ax1.plot(epochs, mean_acc_1, label=f'{label_1}', 
+             color=COLORS['standard'], linewidth=2.5, zorder=3)
+    ax1.fill_between(epochs, mean_acc_1 - ci_acc_1, mean_acc_1 + ci_acc_1, 
+                     color=COLORS['standard'], alpha=0.25, label=f'{label_1} 95% CI', zorder=2)
+    
+    ax1.plot(epochs, mean_acc_2, label=f'{label_2}', 
+             color=COLORS['np'], linewidth=2.5, zorder=3)
+    ax1.fill_between(epochs, mean_acc_2 - ci_acc_2, mean_acc_2 + ci_acc_2, 
+                     color=COLORS['np'], alpha=0.25, label=f'{label_2} 95% CI', zorder=2)
+    
+    # Annotate final values
+    ax1.plot(epochs[-1], mean_acc_1[-1], 'o', color=COLORS['standard'], 
+             markersize=10, markeredgewidth=2, markeredgecolor='white', zorder=4)
+    ax1.plot(epochs[-1], mean_acc_2[-1], 'o', color=COLORS['np'], 
+             markersize=10, markeredgewidth=2, markeredgecolor='white', zorder=4)
+    
+    # Determine annotation position based on which is higher
+    y_offset_1 = 25 if mean_acc_1[-1] < mean_acc_2[-1] else -35
+    y_offset_2 = 25 if mean_acc_2[-1] < mean_acc_1[-1] else -35
+    
+    ax1.annotate(f'{mean_acc_1[-1]:.2f}% ± {std_acc_1[-1]:.2f}%', 
+                 (epochs[-1], mean_acc_1[-1]),
+                 textcoords="offset points", xytext=(0, y_offset_1), ha='center',
+                 fontsize=11, color=COLORS['standard'], fontweight='bold',
+                 bbox=dict(boxstyle='round,pad=0.5', facecolor='white', edgecolor=COLORS['standard'], alpha=0.9),
+                 arrowprops=dict(arrowstyle='->', color=COLORS['standard'], lw=2))
+    ax1.annotate(f'{mean_acc_2[-1]:.2f}% ± {std_acc_2[-1]:.2f}%', 
+                 (epochs[-1], mean_acc_2[-1]),
+                 textcoords="offset points", xytext=(0, y_offset_2), ha='center',
+                 fontsize=11, color=COLORS['np'], fontweight='bold',
+                 bbox=dict(boxstyle='round,pad=0.5', facecolor='white', edgecolor=COLORS['np'], alpha=0.9),
+                 arrowprops=dict(arrowstyle='->', color=COLORS['np'], lw=2))
+    
+    ax1.set_ylabel('Accuracy (%)', fontsize=14, fontweight='bold')
+    ax1.legend(loc='best', fontsize=12, frameon=True, shadow=True)
+    ax1.set_title(f"Model Comparison: {idn} - Accuracy (n={n_runs} runs)", 
+                  fontsize=15, fontweight='bold', pad=15)
+    ax1.grid(True, linestyle='--', alpha=0.4, linewidth=0.8)
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+    
+    # Plot loss with confidence intervals
+    ax2.plot(epochs, mean_lss_1, label=f'{label_1}', 
+             color=COLORS['standard'], linewidth=2.5, zorder=3)
+    ax2.fill_between(epochs, mean_lss_1 - ci_lss_1, mean_lss_1 + ci_lss_1, 
+                     color=COLORS['standard'], alpha=0.25, label=f'{label_1} 95% CI', zorder=2)
+    
+    ax2.plot(epochs, mean_lss_2, label=f'{label_2}', 
+             color=COLORS['np'], linewidth=2.5, zorder=3)
+    ax2.fill_between(epochs, mean_lss_2 - ci_lss_2, mean_lss_2 + ci_lss_2, 
+                     color=COLORS['np'], alpha=0.25, label=f'{label_2} 95% CI', zorder=2)
+    
+    # Annotate final values
+    ax2.plot(epochs[-1], mean_lss_1[-1], 'o', color=COLORS['standard'], 
+             markersize=10, markeredgewidth=2, markeredgecolor='white', zorder=4)
+    ax2.plot(epochs[-1], mean_lss_2[-1], 'o', color=COLORS['np'], 
+             markersize=10, markeredgewidth=2, markeredgecolor='white', zorder=4)
+    
+    # Determine annotation position based on which is higher
+    y_offset_1 = -35 if mean_lss_1[-1] > mean_lss_2[-1] else 25
+    y_offset_2 = -35 if mean_lss_2[-1] > mean_lss_1[-1] else 25
+    
+    ax2.annotate(f'{mean_lss_1[-1]:.4f} ± {std_lss_1[-1]:.4f}', 
+                 (epochs[-1], mean_lss_1[-1]),
+                 textcoords="offset points", xytext=(0, y_offset_1), ha='center',
+                 fontsize=11, color=COLORS['standard'], fontweight='bold',
+                 bbox=dict(boxstyle='round,pad=0.5', facecolor='white', edgecolor=COLORS['standard'], alpha=0.9),
+                 arrowprops=dict(arrowstyle='->', color=COLORS['standard'], lw=2))
+    ax2.annotate(f'{mean_lss_2[-1]:.4f} ± {std_lss_2[-1]:.4f}', 
+                 (epochs[-1], mean_lss_2[-1]),
+                 textcoords="offset points", xytext=(0, y_offset_2), ha='center',
+                 fontsize=11, color=COLORS['np'], fontweight='bold',
+                 bbox=dict(boxstyle='round,pad=0.5', facecolor='white', edgecolor=COLORS['np'], alpha=0.9),
+                 arrowprops=dict(arrowstyle='->', color=COLORS['np'], lw=2))
+    
+    ax2.set_xlabel('Epoch', fontsize=14, fontweight='bold')
+    ax2.set_ylabel('Loss', fontsize=14, fontweight='bold')
+    ax2.legend(loc='best', fontsize=12, frameon=True, shadow=True)
+    ax2.set_title(f"Model Comparison: {idn} - Loss (n={n_runs} runs)", 
+                  fontsize=15, fontweight='bold', pad=15)
+    ax2.grid(True, linestyle='--', alpha=0.4, linewidth=0.8)
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+    
+    plt.tight_layout()
+    plt.savefig(f'Images/statistical_comparison_{idn}.png', dpi=300, bbox_inches='tight')
+    plt.show()
+    plt.close()
+    
+    # Print summary statistics
+    print(f"\n{'='*70}")
+    print(f"Statistical Summary for IDN {idn}")
+    print(f"{'='*70}")
+    print(f"\nFinal Accuracy (%):")
+    print(f"  {label_1}: {mean_acc_1[-1]:.2f} ± {std_acc_1[-1]:.2f}")
+    print(f"  {label_2}: {mean_acc_2[-1]:.2f} ± {std_acc_2[-1]:.2f}")
+    print(f"  Improvement: {mean_acc_2[-1] - mean_acc_1[-1]:+.2f}%")
+    print(f"\nFinal Loss:")
+    print(f"  {label_1}: {mean_lss_1[-1]:.5f} ± {std_lss_1[-1]:.5f}")
+    print(f"  {label_2}: {mean_lss_2[-1]:.5f} ± {std_lss_2[-1]:.5f}")
+    print(f"  Reduction: {mean_lss_1[-1] - mean_lss_2[-1]:+.5f}")
+    print(f"{'='*70}\n")
+
 
 def main():
     arch = [ 
@@ -485,10 +571,10 @@ def main():
     models_2_list = []
     nn_acc = []
     np_acc = []
-    experiment_name = "CIFAR10_Scaled"
-    k = 1
-    n_c = 10
-    for i in range(30, 40):
+    experiment_name = "CIFAR-100"
+    k = 2
+    n_c = 100
+    for i in range(60, 70):
         nn = NeuralNetwork(arch[k])
         nn.load_model(i)
         nn_acc.append(nn.acc_stat)
@@ -498,7 +584,7 @@ def main():
         np_acc.append(np.acc_stat)
         models_2_list.append(np)
 
-    _, _, X_test, y_test, y_test_orig = load_data_CIFAR10_stan()
+    _, _, X_test, y_test, y_test_orig = load_data_CIFAR100_stan()
 
     std_results, np_results = process_and_save_results_statistical(
         idn=experiment_name,
@@ -511,9 +597,9 @@ def main():
     )
 
     create_box_plots(std_results, np_results, experiment_name)
-    plot_batch_confusion_matrix(std_results, np_results, experiment_name)
-    plot_batch_pca_visualization(X_test, y_test_orig, std_results, np_results, experiment_name)
-    plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.35, threshold_end=0.85, num_thresholds=5)
+    #plot_batch_confusion_matrix(std_results, np_results, experiment_name)
+    #plot_batch_pca_visualization(X_test, y_test_orig, std_results, np_results, experiment_name)
+    #plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.87, threshold_end=0.98, num_thresholds=5)
 
 
 if __name__ == "__main__":

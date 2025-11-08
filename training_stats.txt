@@ -1,0 +1,48 @@
+MNIST
+1. Standard: acc=0.9818, loss=0.0660; NPNN: acc=0.9856, loss=0.0590
+2. Standard: acc=0.9815, loss=0.0663; NPNN: acc=0.9853, loss=0.0593
+3. Standard: acc=0.9819, loss=0.0658; NPNN: acc=0.9851, loss=0.0606
+4. Standard: acc=0.9828, loss=0.0611; NPNN: acc=0.9855, loss=0.0594
+5. Standard: acc=0.9822, loss=0.0643; NPNN: acc=0.9856, loss=0.0588
+6. Standard: acc=0.9818, loss=0.0640; NPNN: acc=0.9856, loss=0.0603
+7. Standard: acc=0.9821, loss=0.0649; NPNN: acc=0.9846, loss=0.0611
+8. Standard: acc=0.9828, loss=0.0621; NPNN: acc=0.9854, loss=0.0595
+9. Standard: acc=0.9822, loss=0.0647; NPNN: acc=0.9851, loss=0.0603
+10. Standard: acc=0.9826, loss=0.0633; NPNN: acc=0.9856, loss=0.0590
+
+FashionMNIST
+1. Standard: acc=0.9200, loss=0.2206; NPNN: acc=0.9280, loss=0.2028
+2. Standard: acc=0.9198, loss=0.2221; NPNN: acc=0.9308, loss=0.1979
+3. Standard: acc=0.9214, loss=0.2151; NPNN: acc=0.9318, loss=0.1901
+4. Standard: acc=0.9185, loss=0.2230; NPNN: acc=0.9293, loss=0.1983
+5. Standard: acc=0.9218, loss=0.2139; NPNN: acc=0.9284, loss=0.1981
+6. Standard: acc=0.9196, loss=0.2206; NPNN: acc=0.9302, loss=0.1944
+7. Standard: acc=0.9181, loss=0.2244; NPNN: acc=0.9306, loss=0.1954
+8. Standard: acc=0.9205, loss=0.2188; NPNN: acc=0.9300, loss=0.1982
+9. Standard: acc=0.9226, loss=0.2143; NPNN: acc=0.9298, loss=0.1964
+10. Standard: acc=0.9205, loss=0.2198; NPNN: acc=0.9312, loss=0.1961
+
+CIFAR10
+1. Standard: acc=0.8108, loss=0.5301; NPNN: acc=0.8984, loss=0.2888
+2. Standard: acc=0.8336, loss=0.4795; NPNN: acc=0.8984, loss=0.2888
+3. Standard: acc=0.8291, loss=0.4764; NPNN: acc=0.8945, loss=0.2964
+4. Standard: acc=0.8270, loss=0.4922; NPNN: acc=0.8945, loss=0.2964
+5. Standard: acc=0.8131, loss=0.5094; NPNN: acc=0.8888, loss=0.3255
+6. Standard: acc=0.8433, loss=0.4600; NPNN: acc=0.8973, loss=0.2783
+7. Standard: acc=0.8108, loss=0.5301; NPNN: acc=0.8729, loss=0.3571
+8. Standard: acc=0.8223, loss=0.4954; NPNN: acc=0.8763, loss=0.3503
+9. Standard: acc=0.7914, loss=0.5653; NPNN: acc=0.8973, loss=0.2783
+10. Standard: acc=0.7790, loss=0.5910; NPNN: acc=0.8888, loss=0.3255
+
+CIFAR100
+1. Standard: acc=0.6562, loss=1.2963; NPNN: acc=0.7537, loss=0.8939
+2. Standard: acc=0.6889, loss=1.2047; NPNN: acc=0.7385, loss=0.9507
+3. Standard: acc=0.6577, loss=1.2854; NPNN: acc=0.7675, loss=0.8459
+4. Standard: acc=0.6846, loss=1.2276; NPNN: acc=0.7537, loss=0.8939
+5. Standard: acc=0.6742, loss=1.2477; NPNN: acc=0.7426, loss=0.9371
+6. Standard: acc=0.7011, loss=1.1595; NPNN: acc=0.7568, loss=0.8886
+7. Standard: acc=0.6821, loss=1.2195; NPNN: acc=0.7570, loss=0.8939
+8. Standard: acc=0.6562, loss=1.2963; NPNN: acc=0.7679, loss=0.8554
+9. Standard: acc=0.6680, loss=1.2815; NPNN: acc=0.7649, loss=0.8558
+10. Standard: acc=0.6755, loss=1.2350; NPNN: acc=0.6981, loss=1.0895
+

@@ -1,0 +1,175 @@
+########################################################################### 
+MNIST
+########################################################################### 
+
+ACCURACY:
+  Standard NN: 0.9728 ± 0.0008
+  NP NN:       0.9743 ± 0.0005
+  Difference:  0.0015
+  t-statistic: -4.7862
+  p-value:     0.0010 ***
+  Cohen's d:   -1.5135 (large effect)
+
+PRECISION:
+  Standard NN: 0.9727 ± 0.0008
+  NP NN:       0.9742 ± 0.0005
+  Difference:  0.0015
+  t-statistic: -4.6627
+  p-value:     0.0012 **
+  Cohen's d:   -1.4745 (large effect)
+
+RECALL:
+  Standard NN: 0.9725 ± 0.0008
+  NP NN:       0.9740 ± 0.0005
+  Difference:  0.0015
+  t-statistic: -4.8192
+  p-value:     0.0009 ***
+  Cohen's d:   -1.5240 (large effect)
+
+F1:
+  Standard NN: 0.9726 ± 0.0008
+  NP NN:       0.9741 ± 0.0005
+  Difference:  0.0015
+  t-statistic: -4.7582
+  p-value:     0.0010 **
+  Cohen's d:   -1.5047 (large effect)
+
+INFERENCE_TIME:
+  Standard NN: 0.0094 ± 0.0007
+  NP NN:       0.0095 ± 0.0007
+  Difference:  0.0001
+  t-statistic: -0.1429
+  p-value:     0.8895 ns
+  Cohen's d:   -0.0452 (small effect)
+
+########################################################################### 
+Fashion_MNIST
+########################################################################### 
+
+ACCURACY:
+  Standard NN: 0.8824 ± 0.0019
+  NP NN:       0.8854 ± 0.0015
+  Difference:  0.0031
+  t-statistic: -3.2477
+  p-value:     0.0100 *
+  Cohen's d:   -1.0270 (large effect)
+
+PRECISION:
+  Standard NN: 0.8832 ± 0.0018
+  NP NN:       0.8871 ± 0.0010
+  Difference:  0.0038
+  t-statistic: -4.9262
+  p-value:     0.0008 ***
+  Cohen's d:   -1.5578 (large effect)
+
+RECALL:
+  Standard NN: 0.8824 ± 0.0019
+  NP NN:       0.8854 ± 0.0015
+  Difference:  0.0031
+  t-statistic: -3.2477
+  p-value:     0.0100 *
+  Cohen's d:   -1.0270 (large effect)
+
+F1:
+  Standard NN: 0.8818 ± 0.0018
+  NP NN:       0.8856 ± 0.0013
+  Difference:  0.0038
+  t-statistic: -4.3672
+  p-value:     0.0018 **
+  Cohen's d:   -1.3810 (large effect)
+
+INFERENCE_TIME:
+  Standard NN: 0.0094 ± 0.0008
+  NP NN:       0.0091 ± 0.0006
+  Difference:  -0.0003
+  t-statistic: 0.8814
+  p-value:     0.4010 ns
+  Cohen's d:   0.2787 (small effect)
+
+########################################################################### 
+CIFAR10
+########################################################################### 
+
+ACCURACY:
+  Standard NN: 0.4426 ± 0.0052
+  NP NN:       0.4824 ± 0.0065
+  Difference:  0.0398
+  t-statistic: -20.0662
+  p-value:     0.0000 ***
+  Cohen's d:   -6.3455 (large effect)
+
+PRECISION:
+  Standard NN: 0.4476 ± 0.0044
+  NP NN:       0.4889 ± 0.0076
+  Difference:  0.0413
+  t-statistic: -20.1413
+  p-value:     0.0000 ***
+  Cohen's d:   -6.3692 (large effect)
+
+RECALL:
+  Standard NN: 0.4426 ± 0.0052
+  NP NN:       0.4824 ± 0.0065
+  Difference:  0.0398
+  t-statistic: -20.0662
+  p-value:     0.0000 ***
+  Cohen's d:   -6.3455 (large effect)
+
+F1:
+  Standard NN: 0.4438 ± 0.0051
+  NP NN:       0.4823 ± 0.0073
+  Difference:  0.0385
+  t-statistic: -18.4779
+  p-value:     0.0000 ***
+  Cohen's d:   -5.8432 (large effect)
+
+INFERENCE_TIME:
+  Standard NN: 0.0324 ± 0.0015
+  NP NN:       0.0315 ± 0.0009
+  Difference:  -0.0009
+  t-statistic: 1.9922
+  p-value:     0.0775 ns
+  Cohen's d:   0.6300 (medium effect)
+
+########################################################################### 
+CIFAR100
+########################################################################### 
+
+ACCURACY:
+  Standard NN: 0.1644 ± 0.0039
+  NP NN:       0.1989 ± 0.0049
+  Difference:  0.0345
+  t-statistic: -22.4687
+  p-value:     0.0000 ***
+  Cohen's d:   -7.1052 (large effect)
+
+PRECISION:
+  Standard NN: 0.1673 ± 0.0041
+  NP NN:       0.2060 ± 0.0042
+  Difference:  0.0387
+  t-statistic: -21.5470
+  p-value:     0.0000 ***
+  Cohen's d:   -6.8138 (large effect)
+
+RECALL:
+  Standard NN: 0.1644 ± 0.0039
+  NP NN:       0.1989 ± 0.0049
+  Difference:  0.0345
+  t-statistic: -22.4687
+  p-value:     0.0000 ***
+  Cohen's d:   -7.1052 (large effect)
+
+F1:
+  Standard NN: 0.1624 ± 0.0037
+  NP NN:       0.1961 ± 0.0041
+  Difference:  0.0337
+  t-statistic: -22.3923
+  p-value:     0.0000 ***
+  Cohen's d:   -7.0811 (large effect)
+
+INFERENCE_TIME:
+  Standard NN: 0.0318 ± 0.0011
+  NP NN:       0.0317 ± 0.0011
+  Difference:  -0.0001
+  t-statistic: 0.2965
+  p-value:     0.7736 ns
+  Cohen's d:   0.0938 (small effect)
