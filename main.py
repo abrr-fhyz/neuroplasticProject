@@ -112,15 +112,15 @@ def handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig):
     idn = i*10 + j
     print(f"Training standard neural network - IDN: {idn}...")
     std_model = NeuralNetwork(architecture)
-    #std_model.train(X_train, y_train, epochs=e)
-    #std_model.save_model(idn)
-    std_model.load_model(idn)
+    std_model.train(X_train, y_train, epochs=e)
+    std_model.save_model(idn)
+    #std_model.load_model(idn)
 
     print(f"\nTraining neuroplastic neural network - IDN: {idn}...")
     np_model = NPNeuralNetwork(architecture)
-    #np_model.train(X_train, y_train, X_test, y_test, epochs=e)
-    #np_model.save_model(idn)
-    np_model.load_model(idn)
+    np_model.train(X_train, y_train, X_test, y_test, epochs=e)
+    np_model.save_model(idn)
+    #np_model.load_model(idn)
 
     process_and_save_results(idn, std_model, np_model, X_test, y_test, y_test_orig)
 
@@ -128,7 +128,7 @@ def handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig):
 #main loop
 def main():
     ensure_directories()    
-    for i in range(5, 6):
+    for i in range(0, 6):
         if i == 0:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_MNIST()
             print(f"\n\n\nTRAINING ON MNIST FOR {final_test - initial_test} TESTS \n\n\n")

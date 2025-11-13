@@ -1,0 +1,39 @@
+MNIST
+1. Average Accuracy Speedup:       +13.32%
+2. Average Loss Reduction:         -10.49%
+3. AUAC Standard:                  46.7891
+4. AUAC NPNN:                      46.9909
+5. AUAC Difference:                +0.2018
+6. AULC Standard:                  7.7552
+7. AULC NPNN:                      7.4276
+8. AULC Difference:                +0.3276
+
+FashionMNIST
+1. Average Accuracy Speedup:       +12.72%
+2. Average Loss Reduction:         -9.45%
+3. AUAC Standard:                  70.1132
+4. AUAC NPNN:                      70.4730
+5. AUAC Difference:                +0.3599
+6. AULC Standard:                  24.6786
+7. AULC NPNN:                      23.9911
+8. AULC Difference:                +0.6875
+
+CIFAR10
+1. Average Accuracy Speedup:       +15.10%
+2. Average Loss Reduction:         -12.31%
+3. AUAC Standard:                  75.8754
+4. AUAC NPNN:                      81.1903
+5. AUAC Difference:                +5.3148
+6. AULC Standard:                  120.6648
+7. AULC NPNN:                      105.7956
+8. AULC Difference:                +14.8692
+
+CIFAR100
+1. Average Accuracy Speedup:       +14.79%
+2. Average Loss Reduction:         -12.89%
+3. AUAC Standard:                  24.2599
+4. AUAC NPNN:                      28.1795
+5. AUAC Difference:                +3.9196
+6. AULC Standard:                  183.2289
+7. AULC NPNN:                      165.2165
+8. AULC Difference:                +18.0124

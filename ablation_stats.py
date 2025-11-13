@@ -24,7 +24,7 @@ def show_comparison_stats_with_ci(all_acc_1, all_acc_2, all_acc_3, all_acc_4, al
     colors_5 = {
         'model1': '#FF0000',  # Red
         'model2': '#00FF00',  # Green
-        'model3': '#FFFF00',  # Yellow
+        'model3': "#FF6600",  # Orange
         'model4': '#000000',  # Black
         'model5': '#0000FF',  # Blue (Standard NN)
     }
@@ -300,12 +300,12 @@ arch = [
 
 ds = [
     "MNIST",
-    "CIFAR10",
-    "CIFAR100"
+    "CIFAR-10",
+    "CIFAR-100"
 ]
 
-idx = 2
-train_idx = 5
+idx = 1
+train_idx = 2
 
 def main():
     batch_analysis(idx, ds[idx], num_runs=5, confidence=0.95)

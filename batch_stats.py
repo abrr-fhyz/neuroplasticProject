@@ -13,6 +13,7 @@ from tensorflow.keras.datasets import (
 )
 
 from main import load_data_CIFAR10_stan, load_data_CIFAR100_stan, load_data_MNIST, load_data_fashion, load_data_CIFAR10
+from util import compute_convergence_metrics
 
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.size'] = 11
@@ -571,20 +572,24 @@ def main():
     models_2_list = []
     nn_acc = []
     np_acc = []
-    experiment_name = "CIFAR-100"
-    k = 2
-    n_c = 100
-    for i in range(60, 70):
+    nn_lss = []
+    np_lss = []
+    experiment_name = "Fashion-MNIST"
+    k = 0
+    n_c = 10
+    for i in range(10, 20):
         nn = NeuralNetwork(arch[k])
         nn.load_model(i)
         nn_acc.append(nn.acc_stat)
+        nn_lss.append(nn.loss_stat)
         models_1_list.append(nn)
         np = NPNeuralNetwork(arch[k])
         np.load_model(i)
         np_acc.append(np.acc_stat)
+        np_lss.append(np.loss_stat)
         models_2_list.append(np)
 
-    _, _, X_test, y_test, y_test_orig = load_data_CIFAR100_stan()
+    _, _, X_test, y_test, y_test_orig = load_data_fashion()
 
     std_results, np_results = process_and_save_results_statistical(
         idn=experiment_name,
@@ -596,10 +601,13 @@ def main():
         n_classes=n_c
     )
 
-    create_box_plots(std_results, np_results, experiment_name)
+    thresh = 9
+
+    #create_box_plots(std_results, np_results, experiment_name)
     #plot_batch_confusion_matrix(std_results, np_results, experiment_name)
     #plot_batch_pca_visualization(X_test, y_test_orig, std_results, np_results, experiment_name)
-    #plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.87, threshold_end=0.98, num_thresholds=5)
+    #plot_epoch_convergence(nn_acc, np_acc, experiment_name, threshold_start=0.1, threshold_end=0.65, num_thresholds=thresh)
+    #compute_convergence_metrics(nn_acc, np_acc, nn_lss, np_lss, threshold_start=0.1, threshold_end=0.65, num_thresholds=thresh, loss_threshold_start=4.0, loss_threshold_end=1.3, num_loss_thresholds=thresh)
 
 
 if __name__ == "__main__":

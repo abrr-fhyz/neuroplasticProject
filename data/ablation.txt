@@ -1,0 +1,45 @@
+======================================================================
+1 - Ablation Study Summary (n=5 runs, CIFAR-10)
+======================================================================
+
+Final Accuracy (%):
+  Pruning/genesis: 82.51 ± 0.13
+  Adaptive LR: 85.54 ± 2.97
+  Hebbian: 86.14 ± 2.63
+  Full NPNN: 89.49 ± 0.43
+  Standard NN: 82.27 ± 1.13
+
+Final Loss:
+  Pruning/genesis: 0.49930 ± 0.00664
+  Adaptive LR: 0.40407 ± 0.08351
+  Hebbian: 0.39828 ± 0.06116
+  Full NPNN: 0.29919 ± 0.01689
+  Standard NN: 0.49750 ± 0.02482
+
+Improvement of Full NPNN over Standard NN:
+  Accuracy: +7.22%
+  Loss: +0.19831
+======================================================================
+
+======================================================================
+2 - Ablation Study Summary (n=5 runs, CIFAR-100)
+======================================================================
+
+Final Accuracy (%):
+  Pruning/genesis: 67.02 ± 1.81
+  Adaptive LR: 73.72 ± 0.94
+  Hebbian: 70.24 ± 1.04
+  Full NPNN: 75.12 ± 1.26
+  Standard NN: 67.23 ± 1.67
+
+Final Loss:
+  Pruning/genesis: 1.26448 ± 0.06332
+  Adaptive LR: 0.94265 ± 0.02799
+  Hebbian: 1.16444 ± 0.03067
+  Full NPNN: 0.90430 ± 0.04597
+  Standard NN: 1.25235 ± 0.04275
+
+Improvement of Full NPNN over Standard NN:
+  Accuracy: +7.89%
+  Loss: +0.34805
+======================================================================
