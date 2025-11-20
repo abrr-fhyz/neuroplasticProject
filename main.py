@@ -118,7 +118,7 @@ def handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig):
 
     print(f"\nTraining neuroplastic neural network - IDN: {idn}...")
     np_model = NPNeuralNetwork(architecture)
-    np_model.train(X_train, y_train, X_test, y_test, epochs=e)
+    np_model.train(X_train, y_train, epochs=e)
     np_model.save_model(idn)
     #np_model.load_model(idn)
 
