@@ -1,0 +1,65 @@
+ConvPoolModule loaded from artifacts/conv_nn_0.npz
+Test Accuracy: 69.59%  (6959/10000)
+ConvPoolModule loaded from artifacts/conv_np_0.npz
+Test Accuracy: 69.30%  (6930/10000)
+
+ConvPoolModule loaded from artifacts/conv_nn_1.npz
+Test Accuracy: 69.62%  (6962/10000)
+ConvPoolModule loaded from artifacts/conv_np_1.npz
+Test Accuracy: 70.46%  (7046/10000)
+
+ConvPoolModule loaded from artifacts/conv_nn_2.npz
+Test Accuracy: 69.29%  (6929/10000)
+ConvPoolModule loaded from artifacts/conv_np_2.npz
+Test Accuracy: 70.92%  (7092/10000)
+
+ConvPoolModule loaded from artifacts/conv_nn_3.npz
+Test Accuracy: 70.11%  (7011/10000)
+ConvPoolModule loaded from artifacts/conv_np_3.npz
+Test Accuracy: 70.13%  (7013/10000)
+
+ConvPoolModule loaded from artifacts/conv_nn_4.npz
+Test Accuracy: 69.05%  (6905/10000)
+ConvPoolModule loaded from artifacts/conv_np_4.npz
+Test Accuracy: 70.10%  (7010/10000)
+
+ConvPoolModule loaded from artifacts/conv_nn_5.npz
+Test Accuracy: 70.20%  (7020/10000)
+ConvPoolModule loaded from artifacts/conv_np_5.npz
+Test Accuracy: 70.57%  (7057/10000)
+
+ConvPoolModule loaded from artifacts/conv_nn_6.npz
+Test Accuracy: 69.87%  (6987/10000)
+ConvPoolModule loaded from artifacts/conv_np_6.npz
+Test Accuracy: 71.48%  (7148/10000)
+
+ConvPoolModule loaded from artifacts/conv_nn_7.npz
+Test Accuracy: 69.05%  (6905/10000)
+ConvPoolModule loaded from artifacts/conv_np_7.npz
+Test Accuracy: 70.11%  (7011/10000)
+
+ConvPoolModule loaded from artifacts/conv_nn_8.npz
+Test Accuracy: 68.45%  (6845/10000)
+ConvPoolModule loaded from artifacts/conv_np_8.npz
+Test Accuracy: 70.72%  (7072/10000)
+
+ConvPoolModule loaded from artifacts/conv_nn_9.npz
+Test Accuracy: 68.82%  (6882/10000)
+ConvPoolModule loaded from artifacts/conv_np_9.npz
+Test Accuracy: 70.72%  (7072/10000)
+
+═══════════════════════════════════════════════════════════
+  CIFAR-10 Test Accuracy Comparison (10 runs each)
+═══════════════════════════════════════════════════════════
+
+                    NN (Std)      NP (Neuroplastic)
+───────────────────────────────────────────────────────────
+Mean                69.41%          70.45%
+Std Dev             ±0.54%          ±0.56%
+Min                 68.45%          69.30%
+Max                 70.20%          71.48%
+───────────────────────────────────────────────────────────
+
+Improvement:        +1.04% absolute  (+1.50% relative)
+
+═══════════════════════════════════════════════════════════

@@ -37,7 +37,7 @@ class NPNeuralNetwork:
         self.bcm_const = 3000 # bcm time constant threshold
         self.plasticity_factor = 1.2
         if en_plasticity:
-            self.prune_threshold = 5e-3 # threshold for cumulative update below which connections are pruned  
+            self.prune_threshold = 1e-3 # threshold for cumulative update below which connections are pruned  
             self.requalify_threshold = 5e-2 # if weights are near zero, they get reinitialized when loss degrades
         else:
             self.prune_threshold = -1
