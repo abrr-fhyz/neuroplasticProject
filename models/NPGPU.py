@@ -2,7 +2,7 @@ import numpy as np
 gpu_active = False
 
 class NPNeuralNetwork:
-    def __init__(self, layers, initial_lr=0.001, en_hebbian=True, en_adaptive_lr=True, en_plasticity=True, gpu = True):
+    def __init__(self, layers, initial_lr=0.0007, en_hebbian=True, en_adaptive_lr=True, en_plasticity=True, gpu = True):
         self.filename = "artifacts/model_np_"
         self.layers = layers
         self.no_of_layers = len(layers)
@@ -30,14 +30,14 @@ class NPNeuralNetwork:
         self.lr_min = 1e-6 # minimum learning rate
         self.lr_max = 0.1  # maximum allowed learning rate
         self.lr_decay_factor = 0.975 # a gentler decay when loss does not improve
-        self.lr_growth_factor = 1.1 # a stronger increase when performance improves
+        self.lr_growth_factor = 1.05 # a stronger increase when performance improves
 
         # Hyperparameters for neuroplasticity:
-        self.hebbian_rate = 1e-4 # scaling factor for Hebbian update
-        self.bcm_const = 3000 # bcm time constant threshold
+        self.hebbian_rate = 5e-4 # scaling factor for Hebbian update
+        self.bcm_const = 2000 # bcm time constant threshold
         self.plasticity_factor = 1.2
         if en_plasticity:
-            self.prune_threshold = 1e-3 # threshold for cumulative update below which connections are pruned  
+            self.prune_threshold = 5e-4 # threshold for cumulative update below which connections are pruned  
             self.requalify_threshold = 5e-2 # if weights are near zero, they get reinitialized when loss degrades
         else:
             self.prune_threshold = -1

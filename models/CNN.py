@@ -63,7 +63,7 @@ def nn_CNN_train(cpm, fc, EPOCHS, X_train, y_train, N, BATCH_SIZE, LR_FC, LR_CON
         print(f"Epoch {epoch:>3}/{EPOCHS}\tLoss: {epoch_loss/n_batches:.4f}\tTrain Acc: {epoch_acc/n_batches*100:.2f}%")
     return cpm, fc
 
-def np_CNN_train(cpm, fc, EPOCHS, X_train, y_train, N, BATCH_SIZE, LR_CONV, X_test, y_test):
+def np_CNN_train(cpm, fc, EPOCHS, X_train, y_train, N, BATCH_SIZE, LR_CONV):
     for epoch in range(1, EPOCHS + 1):
         idx = cp.random.permutation(N)
         X_s, y_s = X_train[idx], y_train[idx]
@@ -96,24 +96,10 @@ def np_CNN_train(cpm, fc, EPOCHS, X_train, y_train, N, BATCH_SIZE, LR_CONV, X_te
 
         active_pct = float(cp.mean(cp.stack([m.mean() for m in fc.masks]))) * 100
         print(f"Epoch {epoch:>3}/{EPOCHS}\tLoss: {avg_loss:.4f}\tTrain Acc: {avg_acc*100:.2f}%\tLR: {fc.lr:.7f}\tActive connections: {active_pct:.1f}%")
-        CNN_test_only(cpm, fc, X_test, y_test)
     return cpm, fc
 
 def CNN_test(cpm, fc, X_test, y_test, TEST_BATCH, sl, fc_type):
-    correct, total = 0, 0
-
-    for start in range(0, X_test.shape[0], TEST_BATCH):
-        Xb = X_test[start : start + TEST_BATCH]
-        yb = y_test[start : start + TEST_BATCH]
-
-        flat     = cpm.forward(Xb)
-        y_pred   = fc.predict(flat)
-        pred_cls = cp.argmax(y_pred, axis=1)
-        true_cls = cp.argmax(yb,     axis=1)
-        correct += int(cp.sum(pred_cls == true_cls))
-        total   += Xb.shape[0]
-
-    print(f"\nTest Accuracy: {correct/total*100:.2f}%  ({correct}/{total})")
+    CNN_test_only(cpm, fc, X_test, y_test, TEST_BATCH)
     model_ext = fc_type + "_" + str(sl)
     cp_name = "artifacts/conv_" + model_ext + ".npz"
     cpm.save(cp_name)
@@ -178,8 +164,54 @@ def train_test_CNN(fc_type, sl, EPOCHS = 25, BATCH_SIZE = 64, LR_CONV = 0.001, L
             en_plasticity  = True,
             gpu            = True,
         )
-        cpm, fc = np_CNN_train(cpm, fc, EPOCHS, X_train, y_train, N, BATCH_SIZE, LR_CONV, X_test, y_test)
+        cpm, fc = np_CNN_train(cpm, fc, EPOCHS, X_train, y_train, N, BATCH_SIZE, LR_CONV)
         CNN_test(cpm, fc, X_test, y_test, TEST_BATCH, sl, fc_type)
     else:
         print("Sorry")
-    
+
+def special_test(idx, EPOCHS = 50, BATCH_SIZE = 64, LR_CONV = 0.001):
+    (X_train_np, y_train_np), (X_test_np, y_test_np) = cifar100.load_data()
+    X_train, y_train = preprocess(X_train_np, y_train_np, num_classes=100)
+    X_test,  y_test  = preprocess(X_test_np,  y_test_np, num_classes=100)
+    N = X_train.shape[0]
+    cpm = ConvPoolModule([
+        {"in_channels":  3, "out_channels":  32, "kernel_size": 3, "pad": 1, "pool_size": 2},
+        {"in_channels": 32, "out_channels":  64, "kernel_size": 3, "pad": 1, "pool_size": 2},
+        {"in_channels": 64, "out_channels": 128, "kernel_size": 3, "pad": 1, "pool_size": 2},
+    ])
+    cpm.load(f"artifacts/conv_np_{idx}.npz")
+    fc = NPNeuralNetwork([2048, 256, 128, 100])
+    for epoch in range(1, EPOCHS + 1):
+        idx = cp.random.permutation(N)
+        X_s, y_s = X_train[idx], y_train[idx]
+        epoch_loss = 0.0
+        epoch_acc  = 0.0
+        n_batches  = 0
+
+        for start in range(0, N, BATCH_SIZE):
+            Xb = X_s[start : start + BATCH_SIZE]  
+            yb = y_s[start : start + BATCH_SIZE]   
+            flat = cpm.forward(Xb)                  
+            fc.epoch_count = epoch                
+            fc.back_propagate(flat, yb)
+            d_flat = np_fc_input_gradient(fc, flat, yb)
+            cpm.backward(d_flat, LR_CONV)
+            y_pred   = fc.predict(flat)
+            loss     = float(NPNeuralNetwork.cross_entropy_loss(yb, y_pred))
+            pred_cls = cp.argmax(y_pred, axis=1)
+            true_cls = cp.argmax(yb,     axis=1)
+            acc      = float(cp.mean(pred_cls == true_cls))
+
+            epoch_loss += loss
+            epoch_acc  += acc
+            n_batches  += 1
+
+        avg_loss = epoch_loss / n_batches
+        avg_acc  = epoch_acc  / n_batches
+        fc.plasticity_update(avg_loss)
+
+        active_pct = float(cp.mean(cp.stack([m.mean() for m in fc.masks]))) * 100
+        print(f"Epoch {epoch:>3}/{EPOCHS}\tLoss: {avg_loss:.4f}\tTrain Acc: {avg_acc*100:.2f}%\tLR: {fc.lr:.7f}\tActive connections: {active_pct:.1f}%")
+        if epoch%5 == 0:
+            CNN_test_only(cpm, fc, X_test, y_test)
+    CNN_test(cpm, fc, X_test, y_test, TEST_BATCH = 256, sl = idx, fc_type = 'np')

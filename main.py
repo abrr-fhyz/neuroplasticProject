@@ -1,11 +1,12 @@
 from tensorflow.keras.utils import to_categorical
 from models.NNGPU import NeuralNetwork
-from models.Prototype import NPNeuralNetwork
+from models.NPGPU import NPNeuralNetwork
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from Stats import ( process_and_save_results, plot_final_metrics)
 import numpy as np
 import os
+import time
 
 #datasets
 from tensorflow.keras.datasets import (
@@ -112,23 +113,29 @@ def handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig):
     idn = i*10 + j
     print(f"Training standard neural network - IDN: {idn}...")
     std_model = NeuralNetwork(architecture)
+    std_start = time.time()
     std_model.train(X_train, y_train, epochs=e)
     std_model.save_model(idn)
+    std_time = time.time() - std_start
     #std_model.load_model(idn)
 
     print(f"\nTraining neuroplastic neural network - IDN: {idn}...")
     np_model = NPNeuralNetwork(architecture)
+    np_start = time.time()
     np_model.train(X_train, y_train, epochs=e)
     np_model.save_model(idn)
+    np_time = time.time() - np_start
     #np_model.load_model(idn)
 
     process_and_save_results(idn, std_model, np_model, X_test, y_test, y_test_orig)
+    return std_time, np_time
 
 
 #main loop
 def main():
     ensure_directories()    
-    for i in range(0, 6):
+    
+    for i in range(5, 6):
         if i == 0:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_MNIST()
             print(f"\n\n\nTRAINING ON MNIST FOR {final_test - initial_test} TESTS \n\n\n")
@@ -147,9 +154,17 @@ def main():
         else:
             X_train, y_train, X_test, y_test, y_test_orig = load_data_CIFAR100_stan()
             print(f"\n\n\nTRAINING ON CIFAR100 FOR {final_test - initial_test} TESTS \n\n\n")
-
+        timing_results_std = []
+        timing_results_np = []
         for j in range(initial_test, final_test):
-            handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig)
+            std_time, np_time = handle_test_and_train(i, j, X_train, y_train, X_test, y_test, y_test_orig)
+            timing_results_std.append(std_time)
+            timing_results_np.append(np_time)
+
+        avg_std = sum(timing_results_std) / len(timing_results_std)
+        avg_np  = sum(timing_results_np)  / len(timing_results_np)
+        print(f"Dataset {i} — Avg std time: {avg_std:.2f}s | Avg NP time: {avg_np:.2f}s")
+
 
         print("\n\n\nTRAIN AND TEST LOOP FINISHED \n\n\n")
 
